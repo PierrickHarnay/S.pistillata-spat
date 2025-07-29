@@ -1,0 +1,103 @@
+---
+title: "Fluoro"
+author: "HM Putnam"
+date: "2023-05-09"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r load_packages}
+#Read in required libraries
+library("tidyr")
+library("ggplot2")
+library("tidyverse")
+library("ggpmisc")
+
+
+```
+
+#read in and clean data
+```{r}
+#reads in the data files
+Data <-read.csv("RAnalysis/data/Fluoro/Plate2_singleplanula_20230508.csv", skip = 59, header=T, sep=",", na.string="NA",check.names = FALSE ) 
+
+#read in platemap
+map <-read.csv("RAnalysis/data/Fluoro/Plate2_singleplanula_20230508_platemap.csv", header=T, sep=",", na.string="NA") 
+
+#remove empty column
+Data <- Data[,-1]
+#name the plate letter column
+colnames(Data)[1] <- "mapletter"
+#name the wavelength column
+colnames(Data)[14] <- "wavelength"
+#replace empty cells with NA
+Data[Data==""] <- NA
+#fill in the plate letters from top to bottom
+Data <-Data %>% fill(mapletter, .direction = "down")
+#remove all rows with NA
+Data <-na.omit(Data)
+#convert from wide to long format 
+Data <- Data %>%  pivot_longer(., cols = "1":"12")
+#add well for merging data with info
+Data$well <- paste0(Data$mapletter,Data$name)
+#join data and info
+Data <- left_join(Data, map, by="well")
+Data$wavelength <- sub("Larvae FL_080523:","Fluoro",Data$wavelength)
+Data$wavelength <- sub(",","_",Data$wavelength)
+
+```
+
+Calculate and substract blanks at each wavelength
+```{r}
+
+blanks <- Data %>%
+  subset(sample.type=="Blank") %>% 
+  group_by(wavelength) %>%
+  summarize(blank.value = mean(value))
+
+Data <- left_join(Data, blanks, by="wavelength")
+
+Data <- Data %>%
+  mutate(corr.value = value - blank.value)
+
+```
+
+Correlations of wavelengths with chlorophyll
+```{r}
+
+Data2<- Data %>% pivot_wider(names_from = wavelength, values_from = corr.value, id_cols=well)
+
+Data2$chl <-Data2$Fluoro440_680
+
+Data3<- Data2 %>% pivot_longer(., cols = Fluoro430_491:Fluoro440_680)
+
+Data3<- Data3 %>% subset(well!="A9")
+
+ggplot(data = Data3, aes(x = chl, y = value)) +
+  stat_poly_line() +
+  stat_poly_eq(use_label(c("eq", "R2")), size = 2.4) +
+  geom_point() +
+  facet_wrap(~name, scales = "free_y")
+
+```
+
+F430_491 <- Data %>%
+  subset(wavelength=="Larvae FL_080523:430,491")
+
+corrplot.mixed(Data, order = 'AOE')
+
+
+
+mean.chl <- Data %>%
+  subset(wavelength=="Fluoro440_680") %>%
+  summarize(chl = mean(value))
+
+ratios.430.491 <- Data %>%
+  subset(wavelength=="Fluoro430_491") %>%
+  group_by(well) %>%
+  summarize(lambda430.491.chl = value/mean.chl)
+
+```
