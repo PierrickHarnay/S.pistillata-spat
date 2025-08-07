@@ -1,0 +1,36 @@
+---
+title: "Coral_mineral_analysis"
+output: html_document
+---
+#loading packages
+```{r, warning = FALSE}
+## load libraries
+library(ggplot2)
+library(readr)
+library(dplyr)
+library(tidyverse)
+library(gridExtra)
+library(ggpubr)
+library(lubridate)
+library(cowplot)
+
+```
+#Import data
+```{r, warning = FALSE}
+mg_data <- read_csv("Magnesium_concentration_coral_mineral.csv")
+
+```
+
+
+```{r, warning = FALSE}
+
+```
+
+```{r, warning = FALSE}
+
+```
+
+```{r, warning = FALSE}
+
+```
+
