@@ -17,20 +17,154 @@ library(cowplot)
 ```
 #Import data
 ```{r, warning = FALSE}
-mg_data <- read_csv("Magnesium_concentration_coral_mineral.csv")
+mg_data <- read_csv("Data/Mineral/Magnesium_concentration_coral_mineral.csv")
+sr_data <- read.csv("Data/Mineral/Strontium_concentration_coral_mineral.csv")
 
 ```
 
+#cleaning dataset 
+```{r, warning = FALSE}
+# Magnesium data
+# Clean column names
+colnames(mg_data) <- c("Number.of.polyps", "Concentration", "Error", "X4", "X5", "X6")
+mg_data <- mg_data %>% select(Number.of.polyps, Concentration, Error)
+
+# remove the NA from the dataset
+mg_data<- na.omit(mg_data)
+
+#Strontium data
+# Clean column names
+colnames(sr_data) <- c("Number.of.polyps", "Concentration", "Error")
+sr_data <- sr_data %>% select(Number.of.polyps, Concentration, Error)
+
+# remove the NA from the dataset
+sr_data<- na.omit(sr_data)
+```
+
+#plot creation to vizualize the data
+```{r, warning = FALSE}
+#Magnesium data
+# Ensure 'Polyps' is ordered
+mg_data$Number.of.polyps <- factor(mg_data$Number.of.polyps, 
+                         levels = c("1p", "3p", "4p", "5p", "6p", "7p", "8p", "9p", "10p"))
+
+# Plot Magnesium bar plot with error bars
+p_mg <- ggplot(mg_data, aes(x = Number.of.polyps, y = Concentration)) +
+  geom_bar(stat = "identity", fill = "red", alpha = 0.6) +  # light red with transparency
+  geom_errorbar(aes(ymin = Concentration - Error, ymax = Concentration + Error), width = 0.2) +
+  geom_point(size = 2, color = "darkred") +  # data points
+  labs(title = "Magnesium concentration", y = "C [at%]", x = "Number of polyps") +
+  theme_minimal()
+
+
+ggsave("Output/Mg_plot.png", plot = p_mg, width = 6, height = 4, dpi = 300)
+
+#Strontium data
+# Ensure 'Polyps' is ordered
+sr_data$Number.of.polyps <- factor(sr_data$Number.of.polyps, 
+                         levels = c("1p", "3p", "4p", "5p", "6p", "7p", "8p", "9p", "10p"))
+
+# Plot Magnesium bar plot with error bars
+p_sr <- ggplot(sr_data, aes(x = Number.of.polyps, y = Concentration)) +
+  geom_bar(stat = "identity", fill = "blue", alpha = 0.6) +  # light blue with transparency
+  geom_errorbar(aes(ymin = Concentration - Error, ymax = Concentration + Error), width = 0.2) +
+  geom_point(size = 2, color = "darkblue") +  # data points
+  labs(title = "Strontium concentration", y = "C [at%]", x = "Number of polyps") +
+  theme_minimal()
+
+ggsave("Output/Sr_plot.png", plot = p_sr, width = 6, height = 4, dpi = 300)
+
+
+```
+
+#combining magnseium and strontium data on the same graph to vizualize the data we got
+```{r, warning = FALSE}
+# Add "Element" column to both datasets
+mg_data$Element <- "Magnesium"
+sr_data$Element <- "Strontium"
+
+# Ensure 'Number.of.polyps' is factor with correct order
+ordered_polyps <- c("1p", "3p", "4p", "5p", "6p", "7p", "8p", "9p", "10p")
+mg_data$Number.of.polyps <- factor(mg_data$Number.of.polyps, levels = ordered_polyps)
+sr_data$Number.of.polyps <- factor(sr_data$Number.of.polyps, levels = ordered_polyps)
+
+# Standardize column names 
+mg_data <- mg_data %>% select(Number.of.polyps, Concentration, Error, Element)
+sr_data <- sr_data %>% select(Number.of.polyps, Concentration, Error, Element)
+
+#combine data
+combined_data <- bind_rows(mg_data, sr_data)
+
+# Plot both elements side by side
+p_combined <- ggplot(combined_data, aes(x = Number.of.polyps, y = Concentration, fill = Element)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9), alpha = 0.6) +
+  geom_errorbar(aes(ymin = Concentration - Error, ymax = Concentration + Error), 
+                position = position_dodge(width = 0.9), width = 0.2) +
+  geom_point(aes(color = Element), position = position_dodge(width = 0.9), size = 2) +
+  scale_fill_manual(values = c("Magnesium" = "red", "Strontium" = "blue")) +
+  scale_color_manual(values = c("Magnesium" = "darkred", "Strontium" = "darkblue")) +
+  labs(title = "Mg and Sr concentration by number of polyps", 
+       y = "C [at%]", x = "Number of polyps", fill = "Element", color = "Element") +
+  theme_minimal()
+
+ggsave("Output/Sr_Mg_plot.png", plot = p_combined, width = 6, height = 4, dpi = 300)
+```
+
+```{r, warning = FALSE}
+#creation bar plot with all the data point and the mean bar for both element 
+#on Y we will have the number of polyps and on X the C [at%] 
+
+p_scatter_mean <- ggplot(combined_data, aes(x = Number.of.polyps, y = Concentration, color = Element)) +
+  geom_jitter(alpha = 0.3, width = 0.2, size = 2) +  # scattered light points
+  stat_summary(fun = mean, geom = "point", size = 3, position = position_dodge(width = 0.6)) +  # mean point
+  stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), 
+               geom = "errorbar", width = 0.2, position = position_dodge(width = 0.6)) +  # SD error bar
+  scale_color_manual(values = c("Magnesium" = "red", "Strontium" = "blue")) +
+  labs(title = "Elemental concentrations by number of polyps",
+       y = "C [at%]",
+       x = "Number of polyps",
+       color = "Element") +
+  theme_minimal()
+
+
+```
 
 ```{r, warning = FALSE}
 
-```
-
-```{r, warning = FALSE}
 
 ```
 
 ```{r, warning = FALSE}
 
+
 ```
 
+```{r, warning = FALSE}
+
+
+```
+
+```{r, warning = FALSE}
+
+
+```
+
+```{r, warning = FALSE}
+
+
+```
+
+```{r, warning = FALSE}
+
+
+```
+
+```{r, warning = FALSE}
+
+
+```
+
+```{r, warning = FALSE}
+
+
+```
