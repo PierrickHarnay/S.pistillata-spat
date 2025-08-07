@@ -114,34 +114,91 @@ ggsave("Output/Sr_Mg_plot.png", plot = p_combined, width = 6, height = 4, dpi = 
 #creation bar plot with all the data point and the mean bar for both element 
 #on Y we will have the number of polyps and on X the C [at%] 
 
-p_scatter_mean <- ggplot(combined_data, aes(x = Number.of.polyps, y = Concentration, color = Element)) +
-  geom_jitter(alpha = 0.3, width = 0.2, size = 2) +  # scattered light points
-  stat_summary(fun = mean, geom = "point", size = 3, position = position_dodge(width = 0.6)) +  # mean point
-  stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), 
-               geom = "errorbar", width = 0.2, position = position_dodge(width = 0.6)) +  # SD error bar
+summary_stats <- combined_data %>%
+  group_by(Element) %>%
+  summarise(
+    Mean = mean(Concentration, na.rm = TRUE),
+    SE = sd(Concentration, na.rm = TRUE) / sqrt(n())
+  )
+
+# Plot
+p_scatter_se <- ggplot(combined_data, aes(x = Element, y = Concentration, color = Element)) +
+  geom_jitter(width = 0.2, alpha = 0.3, size = 2) +  # All data points
+  stat_summary(fun = mean, geom = "point", size = 4) +  # Mean point
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.2) +  # Standard error bars
   scale_color_manual(values = c("Magnesium" = "red", "Strontium" = "blue")) +
-  labs(title = "Elemental concentrations by number of polyps",
-       y = "C [at%]",
-       x = "Number of polyps",
-       color = "Element") +
+  labs(title = "Elemental concentration with mean ± SE",
+       x = "Element",
+       y = "C [at%]") +
   theme_minimal()
 
 
 ```
 
+# after visiualisation of the graph, some outlier need to be removed. 
 ```{r, warning = FALSE}
+combined_data_clean <- combined_data %>%
+  filter(
+    Concentration >= quantile(Concentration, 0.25) - 1.5 * IQR(Concentration),
+    Concentration <= quantile(Concentration, 0.75) + 1.5 * IQR(Concentration)
+  )
 
+boxplot(combined_data$Concentration, main = "Before Removing Outliers")
+
+boxplot(combined_data_clean$Concentration, main = "After Removing Outliers")
 
 ```
-
+#new visualisation of the graph without the outlier 
 ```{r, warning = FALSE}
+p_scatter_se_with_no_outlier <- ggplot(combined_data_clean, aes(x = Element, y = Concentration, color = Element)) +
+  geom_jitter(width = 0.2, alpha = 0.3, size = 2) +  # All data points
+  stat_summary(fun = mean, geom = "point", size = 3) +  # Mean point
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.1) +  # Standard error bars
+  scale_color_manual(values = c("Magnesium" = "brown1", "Strontium" = "deepskyblue1")) +
+  labs(title = "Elemental concentration with mean ± SE",
+       x = NULL,
+       y = "C [at%]") + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 13, face = "bold", hjust = 0.5),
+    axis.text = element_text(size = 10, face = "bold", hjust = 0.5),
+    axis.title.y = element_text(size = 10, margin = margin(r = 10), face = "bold", hjust = 0.5),
+    panel.grid.major.x = element_blank(),
+  )
 
-
+ggsave("Output/Sr_Mg_plot_SE.png", plot = p_scatter_se_with_no_outlier, width = 6, height = 4, dpi = 300)
 ```
 
+#ploting for a linear regression and fizualise the comparaison between mg and sr 
 ```{r, warning = FALSE}
+combined_data_lr$Number.of.polyps <- as.numeric(as.character(combined_data_clean$Number.of.polyps))
 
+table(combined_data$Element)
+str(combined_data$Element)
 
+# Plot with regression lines
+p_lm <- ggplot(combined_data, aes(x = Number.of.polyps, y = Concentration, color = Element, group = Element, fill = Element)) +
+  geom_point(alpha = 0.5, size = 2) +
+  geom_smooth(method = "lm", se = TRUE, size = 1.2, alpha = 0.2) +
+  scale_color_manual(values = c("Magnesium" = "#3498DB", "Strontium" = "#E74C3C")) +
+  scale_fill_manual(values = c("Magnesium" = "#3498DB", "Strontium" = "#E74C3C")) +
+  labs(
+    title = "Linear Regression of Elemental Concentration by Number of Polyps",
+    x = "Number of polyps",
+    y = "C [at%]"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(size = 9, face = "bold", hjust = 0.5),
+    legend.title = element_blank(),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_blank()
+  )
+
+ggsave("Output/Sr_Mg_plot_Lm.png", plot = p_lm, width = 6, height = 4, dpi = 300)
 ```
 
 ```{r, warning = FALSE}
