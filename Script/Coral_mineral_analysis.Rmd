@@ -180,10 +180,10 @@ str(combined_data$Element)
 p_lm <- ggplot(combined_data, aes(x = Number.of.polyps, y = Concentration, color = Element, group = Element, fill = Element)) +
   geom_point(alpha = 0.5, size = 2) +
   geom_smooth(method = "lm", se = TRUE, size = 1.2, alpha = 0.2) +
-  scale_color_manual(values = c("Magnesium" = "#3498DB", "Strontium" = "#E74C3C")) +
-  scale_fill_manual(values = c("Magnesium" = "#3498DB", "Strontium" = "#E74C3C")) +
+  scale_color_manual(values = c("Magnesium" = "#E74C3C", "Strontium" = "#3498DB")) +
+  scale_fill_manual(values = c("Magnesium" = "#E74C3C", "Strontium" = "#3498DB")) +
   labs(
-    title = "Linear Regression of Elemental Concentration by Number of Polyps",
+    title = "Linear regression of elemental concentration by number of polyps",
     x = "Number of polyps",
     y = "C [at%]"
   ) +
