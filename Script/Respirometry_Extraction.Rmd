@@ -1,7 +1,7 @@
 ---
-title: Early life history respirometry (photosynthesis & respiration) with LoLinR
-author: "AS Huffmyer"
-date: '2020'
+title: SDR plate photosynthesis & respiration with LoLinR
+author: "P Harnay"
+date: '2025'
 output:
   html_document:
     code_folding: hide
@@ -53,7 +53,7 @@ library("ggpmisc")
 
 ## Respirometry in LoLinR
 
-Modified from K. Wong, S. Gurr, H. Putnam scripts  
+Modified from K. Wong, S. Gurr, A. Huffmyer, original H. Putnam scripts  
 
 Set the path of all respirometry files within the R project.   
 
@@ -68,10 +68,8 @@ file.names<-basename(list.files(path = path.p, pattern = "csv$", recursive = TRU
 ```
 
 Generate respiration data frames.
-
 ```{r, warning=FALSE, message=FALSE}
 #generate a 6 column dataframe with specific column names
-#respiration
 Resp.R <- data.frame(matrix(NA, ncol=6))
 colnames(Resp.R) <- c("Date", "Run", "Sample.ID","Chamber.ID","Intercept", "umol.L.min")
 
@@ -80,27 +78,26 @@ colnames(Resp.Rb) <- c("Date", "Run", "Sample.ID","Chamber.ID","Intercept", "umo
 
 ```
 
-Load in the sample information file. It is important to have chambers in the order "A1, B1, C1, D1", rather than "A1, A2, A3, A4".  
-
+Load in the sample information file. It is CRITICAL to have chambers in the order "A1, B1, C1, D1", rather than "A1, A2, A3, A4".  
 ```{r, warning=FALSE, message=FALSE}
 Sample.Info<-read.csv("Ranalysis/data/Spat_Info.csv") #information on life stage, number of individuals, runs, etc.
 rename <- Sample.Info$Chamber.ID
 samp <- Sample.Info$Sample.ID
-run <- str_sub(file.names, 10, 15) #grab run from file name
-date <- str_sub(file.names, 1, str_length(file.names)-16) #grab date from file name
+run <- str_sub(file.names, 10, 15) #extract run from file name
+date <- str_sub(file.names, 1, str_length(file.names)-16) #extract date from file name
 
 #load in respiration start times as a list the same length as the number of files
-starttimes<-read.csv("Ranalysis/data/Resp/starttimes.csv") #read in file of starting R and P phase times
-rtime<-starttimes$Rtime #list respiration start times. For respiration measurements, filter as > than this time
+starttimes<-read.csv("Ranalysis/data/Resp/starttimes.csv") #read in file of starting times of the oxygen measurements
+rtime<-starttimes$Rtime #list respiration start times. 
 ```
 
-Run loop to extract slopes from respiration data. Subset for respiration data by filtering time >= respiration start time. Start and end time datasheet has removed first 5 minutes of each run to allow for temp equilibration.  
+Run loop to extract slopes from respiration data. Subset for respiration data by filtering time >= respiration start time. 
 
 ```{r, results=FALSE, warning=FALSE, message=FALSE}
 for(i in 1:length(file.names)) { # for every file in list start at the first and run this following function
   Resp.Data <-read.table(file.path(path.p,file.names[i]), skip = 56, header=T, sep=",", na.string="NA", fill = TRUE, as.is=TRUE, fileEncoding="latin1") #reads in the data files
   Resp.Data$Temp <- Resp.Data[,31] #assigns temp column
-  Resp.Data$Time.Min <- seq.int(from=0, to=((nrow(Resp.Data)*0.25)-0.25), by = 0.25) #set time in min
+  Resp.Data$Time.Min <- seq.int(from=0, to=((nrow(Resp.Data)*0.25)-0.25), by = 0.25) #set time in minutes
   Resp.Data <- Resp.Data %>% #filters data by phase (respiration only)
      filter(Time.Min > rtime[i])
   Resp.Data.N <- Resp.Data[,3:26] #subset desired columns
@@ -128,11 +125,13 @@ for(i in 1:length(file.names)) { # for every file in list start at the first and
 
 Save respiration data frames.  
 ```{r, results=FALSE, warning=FALSE, message=FALSE}
-Resp.R <- Resp.R[-1,] #remove empty column
+Resp.R <- Resp.R[-1,] #remove empty row
 
 write.csv(Resp.R, paste0("Ranalysis/data/Resp/Respiration_rates_Spis_May2023.csv", sep="")) #save respiration rate data
 ```
 
+
+Start here for analysis after the rates have already been extracted, so you don't have to run all of the regressions every time.
 ```{r, warning=FALSE, message=FALSE}
 Resp.Rates <- read.csv(file = "Ranalysis/data/Resp/Respiration_rates_Spis_May2023.csv") #read file back in so slopes don't have to be generated every time
 Resp.Rates <- subset(Resp.Rates, select = -c(X) ) #remove empty column
@@ -140,51 +139,47 @@ Resp.Rates <- subset(Resp.Rates, select = -c(X) ) #remove empty column
 #format "Date" column
 Resp.Rates$Date <- gsub("_.*", "", Resp.Rates$Date)  
 Resp.Rates$Date <- as.numeric(as.character(Resp.Rates$Date))
-#format "run" column
-#Resp.Rates<-Resp.Rates %>%
-#  mutate(Run = str_sub(Run, 4, -1))
-#Resp.Rates$Run<-as.integer(Resp.Rates$Run) #format as # rather than run #, set as integer
+
+Sample.Info<-read.csv("Ranalysis/data/Spat_Info.csv") #information on life stage, number of individuals, runs, etc.
 ```
 
-Merge Resp values with sample info for testing and manipulation.  
-
+Merge Resp values with sample info for data visualization, outlier removal, and statistical testing  
 ```{r, warning=FALSE, message=FALSE}
 oxygen<-left_join(Sample.Info, Resp.Rates, by="Sample.ID") #add respiration data
-colnames(oxygen)[colnames(oxygen) == 'Intercept'] <- 'Resp.Intercept' #rename to specify R
-colnames(oxygen)[colnames(oxygen) == 'umol.L.min'] <- 'R.umol.L.min' #rename to specify R
+colnames(oxygen)[colnames(oxygen) == 'Intercept'] <- 'Resp.Intercept' #rename to specify Respiration
+colnames(oxygen)[colnames(oxygen) == 'umol.L.min'] <- 'R.umol.L.min' #rename to specify Respiration
 
-ggplot(oxygen, aes(R.umol.L.min, Plate.ID,)) + 
+ggplot(oxygen, aes(R.umol.L.min, Plate.ID,)) + #plot to visualize data
   geom_point()
-
 ```
 
 
-Account for volume and substract blank values. Average blank calculated for each run for P and R phases. Display mean blank value in order of R and P phases.    
+Account for volume and substract blank values. Average blank calculated for each run. Display mean blank value in order of R .    
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
 #Account for chamber volume to convert from umol L-1 m-1 to umol m-1. This standardizes across water volumes (different because of coral size) and removes per Liter
-oxygen$R.umol.min <- oxygen$R.umol.L.min * oxygen$Volume #calculate
+oxygen$R.umol.min <- oxygen$R.umol.L.min * oxygen$Volume #calculate units per time
 
-ggplot(oxygen, aes(R.umol.min, Plate.ID,)) + 
+ggplot(oxygen, aes(R.umol.min, Plate.ID,)) + #plot to visualize data
   geom_point()
 
 blank_data <- subset(oxygen, Type == "Blank") #subset to blank data only
-plot(blank_data$R.umol.min,  ylab="umol O2 min-1") #blanks during dark phase
+ggplot(blank_data, aes(R.umol.min, Plate.ID)) + #plot to visualize data, should be 0 or <0
+  geom_point() 
 
-ggplot(blank_data, aes(R.umol.min, Plate.ID)) + 
-  geom_point()
-
-#display mean blankvalues
-meanRblank<-mean(blank_data$R.umol.min) #mean R phase blanks
 ```
 
 Remove blank wells that are outliers.  
 ```{r}
 #filter dark phase blank values
-blank_data<-blank_data%>%
-  filter(R.umol.min > -0.0002)
+#blank_data<-blank_data %>%
+#  filter(R.umol.min > -0.0002) %>%
+#  filter(R.umol.min < 0)
 
 ggplot(blank_data, aes(R.umol.min, Plate.ID,)) +
   geom_point()
+
+#calculate mean blank values
+meanRblank<-mean(blank_data$R.umol.min) #mean R phase blanks
 
 ```
 
@@ -264,7 +259,7 @@ ggplot(oxygen.bio, aes(R.nmol.mm2.min, Plate.ID,)) +
   geom_point()
 
 #Plot Resp as a function of Polyp Number
-ggplot(data = oxygen.bio, aes(x = log10(as.numeric(Polyp.Number)), y = log10(R.nmol.mm2.min))) +
+ggplot(data = oxygen.bio, aes(x = as.numeric(Polyp.Number), y = R.nmol.mm2.min)) +
   stat_poly_line() +
   stat_poly_eq(use_label(c("eq", "R2","P")), size = 4) +
   geom_point() +
