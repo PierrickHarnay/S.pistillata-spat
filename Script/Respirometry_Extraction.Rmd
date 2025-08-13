@@ -52,6 +52,8 @@ library("ggpmisc")
 
 
 ## Respirometry in LoLinR
+CAN START DIRETCLY AT LINE 133!!!
+ALL THE STEP BETWEEN NOW AND 133 ARE FOR GENERATE THE DATA FILE BY CREATING LOOP AND EXTRACTING THE DATA TO START THE ANALYSIS
 
 Modified from K. Wong, S. Gurr, A. Huffmyer, original H. Putnam scripts  
 
@@ -107,7 +109,7 @@ for(i in 1:length(file.names)) { # for every file in list start at the first and
       xall=Resp.Data$Time.Min, yall=as.numeric(Resp.Data.N[, j]), 
       alpha=0.4, method="pc", verbose=TRUE) #extract slopes, percentile rank method with minimum window size of 0.4. This means that in order to fit a slope, it has to encompass at least 40% of available datapoints. 
     
-    pdf(paste0("/Data/Respirometry/RespirationPlots/",date[i], "_",run[i],"_",rename[j],"_regression_trunc.pdf")) #generate output file names
+    pdf(paste0("Data/Respirometry/RespirationPlots/",date[i], "_",run[i],"_",rename[j],"_regression_trunc.pdf")) #generate output file names
     plot(model)
     dev.off()
     
@@ -157,7 +159,6 @@ ggplot(oxygen, aes(R.umol.L.min, Plate.ID,)) + #plot to visualize data
   geom_point()
 ```
 
-
 Account for volume and substract blank values. Average blank calculated for each run. Display mean blank value in order of R .    
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
 #Account for chamber volume to convert from umol L-1 m-1 to umol m-1. This standardizes across water volumes (different because of coral size) and removes per Liter
@@ -187,6 +188,7 @@ meanRblank<-mean(blank_data$R.umol.min) #mean R phase blanks
 
 ```
 
+Vizualisation of the data per plates 
 
 ```{r}
 oxygen$code<-paste(oxygen$Date, oxygen$Plate.ID)
@@ -230,6 +232,7 @@ ggplot(oxygen, aes(R.umol.min.corr, Plate.ID)) +
   geom_point()
 
 ```
+Need to remive the outlier who shift the trend and also remve the negative value because erelevant on what we want to do
 
 Normalize to biologically relevant measure. Here, normalize to size of spat. This can be substituted or changed for larval size/volume as well.  
 
@@ -257,7 +260,7 @@ ggplot(oxygen.bio, aes(R.nmol.mm2.min, Plate.ID)) +
 
 
 ```
-
+Ploting the data with the different function with a regression as Polyp number/ size 
 ```{r}
 ggplot(oxygen.bio, aes(R.nmol.mm2.min, Plate.ID,)) + 
   geom_point()
@@ -270,26 +273,46 @@ ggplot(data = oxygen.bio, aes(x = as.numeric(Polyp.Number), y = R.nmol.mm2.min))
   theme_classic()
 
 #Plot Resp as a function of Size
-ggplot(data = oxygen.bio, aes(x = Size.mm2, y = R.nmol.mm2.min)) +
-  stat_poly_line() +
+
+#ggplot(data = oxygen.bio, aes(x = Size.mm2, y = R.nmol.mm2.min)) +
+#  stat_poly_line() +
+#  stat_poly_eq(use_label(c("eq", "R2","P")), size = 4) +
+#  geom_point() +
+#  theme_classic()
+
+p1 <- ggplot(data = oxygen.bio, aes(x = Size.mm2, y = R.nmol.mm2.min)) +
+  stat_poly_line(color = "cyan2", linewidth = 1, se = TRUE, 
+                 fill = "darkslategray3", alpha = 0.2) +
   stat_poly_eq(use_label(c("eq", "R2","P")), size = 4) +
-  geom_point() +
-  theme_classic()
+  geom_point(color = "darkgray", size = 2, stroke = 0.7, shape = 21, fill = "darkgray") +
+  theme_classic(base_size = 14)
+
+ggsave("size_mm2.png", plot = p1, width = 8, height = 6, dpi = 300)
 
 #Plot Resp as a function of Size
-ggplot(data = oxygen.bio, aes(x = log10(Size.mm2+1), y = log10(R.nmol.mm2.min+1))) +
-  stat_poly_line() +
-  stat_poly_eq(use_label(c("eq", "R2","P")), size = 4) +
-  geom_point() +
-  theme_classic()
 
+#Classic plot: 
+#ggplot(data = oxygen.bio, aes(x = log10(Size.mm2+1), y = log10(R.nmol.mm2.min+1))) +
+#  stat_poly_line() +
+#  stat_poly_eq(use_label(c("eq", "R2","P")), size = 4) +
+#  geom_point() +
+# theme_classic()
 
+p2 <- ggplot(oxygen.bio, aes(x = log10(Size.mm2 + 1), y = log10(R.nmol.mm2.min + 1))) +
+  stat_poly_line(color = "cyan2", linewidth = 1, se = TRUE, 
+                 fill = "darkslategray3", alpha = 0.2) +   # blue line + transparent (fill) SE ribbon
+  stat_poly_eq(use_label(c("eq", "R2", "P")), size = 4) +
+  geom_point(color = "darkgray", size = 2, stroke = 0.7, shape = 21, fill = "darkgray") + # clear points
+  theme_classic(base_size = 14)
+
+ggsave("size_mm2_+1.png", plot = p1, width = 8, height = 6, dpi = 300)
 ```
-
+Comparing the 3 model and using the R2 we can notice that the model of number of polyp is the a great model because R2=<0.01 so it's mean we force the the model and the mean can be enough 
+The R2=0.06 explain only 6% of the variation of our oxygen data and it can be because of the noice too prononce in the data or just not a clear linear trend. This is the R2 for sizes 
 
 Save as .csv file.  
 ```{r, warning=FALSE, message=FALSE}
-write.csv(oxygen.bio, paste0("Ranalysis/output/Spis_spat_RespRates.csv", sep="")) #save final file
+write.csv(oxygen.bio, paste0("Output/Spis_spat_RespRates.csv", sep="")) #save final file
 ```
 
 
