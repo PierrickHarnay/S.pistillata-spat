@@ -35,7 +35,7 @@ Modified from A. Huffmyer H. Putnam scripts
 
 Load metadata
 ```{r}
-sample.info <- read.csv("RAnalysis/data/Spat_Info.csv", na.strings = "NA")
+sample.info <- read.csv("Data/Spat_Info.csv", na.strings = "NA")
 sample.info$Size.mm2 <- as.numeric(as.character(sample.info$Size.mm2))
 
 #Plot Size as a function of Polyp Number
@@ -56,7 +56,7 @@ ggplot(data = sample.info, aes(x = log10(Polyp.Number+1), y = log10(Size.mm2+1))
 PLATE1
 # Import data
 ```{r import_data}
-Data <-read.csv("RAnalysis/data/ImagingPam/20230505_Spat_Plate1_newpoi.csv", header=TRUE, sep=",", na.string="NA") #reads in the data files
+Data <-read.csv("data/Imaging_pam/20230505_Spat_Plate1_newpoi.csv", header=TRUE, sep=",", na.string="NA") #reads in the data files
 Data <- Data[, c("Date", "Time", "PAR", "ETR1","ETR2","ETR3","ETR4","ETR5","ETR6","ETR7","ETR8","ETR9","ETR10","ETR11",
       "ETR12","ETR13","ETR14","ETR15","ETR16","ETR17","ETR18",
       "ETR19","ETR20","ETR21","ETR22")]
@@ -88,9 +88,7 @@ Data.PI <- Data %>% subset(PAR<900) # filter for PAM values from light levels <9
 curve.nlsPIC <- Data.PI %>% nls(ETR ~ (Am*((AQY*PAR)/(sqrt(Am^2 + (AQY*PAR)^2)))-Rd), data=., start=list(Am=0.7,  AQY=0.001, Rd=.4)) #calculate curve fit
 coef(curve.nlsPIC) #examine coefficients
 plot(ETR ~ PAR, data = Data.PI) #plot data
-lines(0:900,
-      predict(curve.nlsPIC,
-              newdata = data.frame(PAR = 0:900)))
+lines(0:900, predict(curve.nlsPIC, newdata = data.frame(PAR = 0:900)))
 ```
 # Define PI curve function as a nonlinear Least Squares regression of a quadratic fit, test nls fit
 Aquatic Photosynthesis, Falkowski   
@@ -125,7 +123,7 @@ mutate(Ik = Am/AQY)%>%
 mutate(Date = "20230505") %>%
 mutate(Plate = "Plate1") %>%
 mutate(Spat.ID.PAM = paste0(Date,"_",Plate,"_",Spat.ID)) %>%
-write_csv(., "RAnalysis/output/Plate1_pi_curve_pars_NLS_fixedparms.csv")
+write_csv(., "Output/Plate1_pi_curve_pars_NLS_fixedparms.csv")
 ```
 
 Plot curve over data points.  
@@ -143,7 +141,7 @@ augmented$ID <-augmented$Spat.ID
 Aug <- augmented %>% separate(ID, c("Sp", "Num", "Type"))
 
 #all colonies together
-pdf("RAnalysis/output/Plate1_PI_Curve_Fit_Plots.pdf")
+pdf("Output/Plate1_PI_Curve_Fit_Plots.pdf")
 PI.curves <- Aug %>%
 ggplot(aes(x=PAR, y=ETR, color=Spat.ID))+
   geom_point() + 
@@ -160,7 +158,7 @@ dev.off()
 
 # Import data
 ```{r import_data}
-Data <-read.csv("RAnalysis/data/ImagingPam/20230505_Spat_Plate2_newpoi.csv", header=T, sep=";", na.string="NA") #reads in the data files
+Data <-read.csv("Data/Imaging_pam/20230505_Spat_Plate2_newpoi.csv", header=T, sep=";", na.string="NA") #reads in the data files
 Data <- Data[, c("Date", "Time", "PAR", "ETR1","ETR2","ETR3","ETR4","ETR5","ETR6","ETR7","ETR8","ETR9","ETR10","ETR11",
       "ETR12","ETR13","ETR14","ETR15","ETR16","ETR17","ETR18",
       "ETR19","ETR20","ETR21","ETR22")]
@@ -227,7 +225,7 @@ mutate(Ik = Am/AQY)%>%
 mutate(Date = "20230505") %>%
 mutate(Plate = "Plate2") %>%
 mutate(Spat.ID.PAM = paste0(Date,"_",Plate,"_",Spat.ID)) %>%
-write_csv(., "RAnalysis/output/Plate2_pi_curve_pars_NLS_fixedparms.csv")
+write_csv(., "Output/Plate2_pi_curve_pars_NLS_fixedparms.csv")
 ```
 
 Plot curve over data points.  
@@ -245,7 +243,7 @@ augmented$ID <-augmented$Spat.ID
 Aug <- augmented %>% separate(ID, c("Sp", "Num", "Type"))
 
 #all colonies together
-pdf("RAnalysis/output/Plate2_PI_Curve_Fit_Plots.pdf")
+pdf("Output/Plate2_PI_Curve_Fit_Plots.pdf")
 PI.curves <- Aug %>%
 ggplot(aes(x=PAR, y=ETR, color=Spat.ID))+
   geom_point() + 
@@ -263,7 +261,7 @@ dev.off()
 
 # Import data
 ```{r import_data}
-Data <-read.csv("RAnalysis/data/ImagingPam/20230510_Spat_Plate3.csv", header=T, sep=",", na.string="NA") #reads in the data files
+Data <-read.csv("Data/Imaging_pam/20230510_Spat_Plate3.csv", header=T, sep=",", na.string="NA") #reads in the data files
 Data <- Data[, c("Date", "Time", "PAR", "ETR1","ETR2","ETR3","ETR4","ETR5","ETR6","ETR7","ETR8","ETR9","ETR10","ETR11",
       "ETR12","ETR13","ETR14","ETR15","ETR16","ETR17","ETR18",
       "ETR19","ETR20","ETR21","ETR22")]
@@ -330,7 +328,7 @@ mutate(Ik = Am/AQY)%>%
 mutate(Date = "20230510") %>%
 mutate(Plate = "Plate3") %>%
 mutate(Spat.ID.PAM = paste0(Date,"_",Plate,"_",Spat.ID)) %>%
-write_csv(., "RAnalysis/output/Plate3_pi_curve_pars_NLS_fixedparms.csv")
+write_csv(., "Output/Plate3_pi_curve_pars_NLS_fixedparms.csv")
 ```
 
 Plot curve over data points.  
@@ -348,7 +346,7 @@ augmented$ID <-augmented$Spat.ID
 Aug <- augmented %>% separate(ID, c("Sp", "Num", "Type"))
 
 #all colonies together
-pdf("RAnalysis/output/Plate3_PI_Curve_Fit_Plots.pdf")
+pdf("Output/Plate3_PI_Curve_Fit_Plots.pdf")
 PI.curves <- Aug %>%
 ggplot(aes(x=PAR, y=ETR, color=Spat.ID))+
   geom_point() + 
@@ -367,7 +365,7 @@ dev.off()
 
 # Import data
 ```{r import_data}
-Data <-read.csv("RAnalysis/data/ImagingPam/20230510_Spat_Plate4.csv", header=T, sep=";", na.string="NA") #reads in the data files
+Data <-read.csv("Data/Imaging_pam/20230510_Spat_Plate4.csv", header=T, sep=";", na.string="NA") #reads in the data files
 Data <- Data[, c("Date", "Time", "PAR", "ETR1","ETR2","ETR3","ETR4","ETR5","ETR6","ETR7","ETR8","ETR9","ETR10","ETR11",
       "ETR12","ETR13","ETR14","ETR15","ETR16","ETR17","ETR18",
       "ETR19","ETR20","ETR21","ETR22")]
@@ -434,7 +432,7 @@ mutate(Ik = Am/AQY)%>%
 mutate(Date = "20230510") %>%
 mutate(Plate = "Plate4") %>%
 mutate(Spat.ID.PAM = paste0(Date,"_",Plate,"_",Spat.ID)) %>%
-write_csv(., "RAnalysis/output/Plate4_pi_curve_pars_NLS_fixedparms.csv")
+write_csv(., "Output/Plate4_pi_curve_pars_NLS_fixedparms.csv")
 ```
 
 Plot curve over data points.  
@@ -452,7 +450,7 @@ augmented$ID <-augmented$Spat.ID
 Aug <- augmented %>% separate(ID, c("Sp", "Num", "Type"))
 
 #all colonies together
-pdf("RAnalysis/output/Plate4_PI_Curve_Fit_Plots.pdf")
+pdf("Output/Plate4_PI_Curve_Fit_Plots.pdf")
 PI.curves <- Aug %>%
 ggplot(aes(x=PAR, y=ETR, color=Spat.ID))+
   geom_point() + 
@@ -471,7 +469,7 @@ dev.off()
 
 # Import data
 ```{r import_data}
-Data <-read.csv("RAnalysis/data/ImagingPam/20230510_Spat_Plate5.csv", header=T, sep=";", na.string="NA") #reads in the data files
+Data <-read.csv("Data/Imaging_pam/20230510_Spat_Plate5.csv", header=T, sep=";", na.string="NA") #reads in the data files
 Data <- Data[, c("Date", "Time", "PAR", "ETR1","ETR2","ETR3","ETR4","ETR5","ETR6","ETR7","ETR8","ETR9","ETR10","ETR11",
       "ETR12","ETR13","ETR14","ETR15","ETR16","ETR17","ETR18",
       "ETR19","ETR20","ETR21","ETR22")]
@@ -538,7 +536,7 @@ mutate(Ik = Am/AQY)%>%
 mutate(Date = "20230510") %>%
 mutate(Plate = "Plate5") %>%
 mutate(Spat.ID.PAM = paste0(Date,"_",Plate,"_",Spat.ID)) %>%
-write_csv(., "RAnalysis/output/Plate5_pi_curve_pars_NLS_fixedparms.csv")
+write_csv(., "Output/Plate5_pi_curve_pars_NLS_fixedparms.csv")
 ```
 
 Plot curve over data points.  
@@ -556,7 +554,7 @@ augmented$ID <-augmented$Spat.ID
 Aug <- augmented %>% separate(ID, c("Sp", "Num", "Type"))
 
 #all colonies together
-pdf("RAnalysis/output/Plate5_PI_Curve_Fit_Plots.pdf")
+pdf("Output/Plate5_PI_Curve_Fit_Plots.pdf")
 PI.curves <- Aug %>%
 ggplot(aes(x=PAR, y=ETR, color=Spat.ID))+
   geom_point() + 
@@ -575,7 +573,7 @@ dev.off()
 
 # Import data
 ```{r import_data}
-Data <-read.csv("RAnalysis/data/ImagingPam/20230510_Spat_Plate6.csv", header=T, sep=";", na.string="NA") #reads in the data files
+Data <-read.csv("Data/Imaging_pam/20230510_Spat_Plate6.csv", header=T, sep=";", na.string="NA") #reads in the data files
 Data <- Data[, c("Date", "Time", "PAR", "ETR1","ETR2","ETR3","ETR4","ETR5","ETR6","ETR7","ETR8","ETR9","ETR10","ETR11",
       "ETR12","ETR13","ETR14","ETR15","ETR16","ETR17","ETR18",
       "ETR19","ETR20","ETR21")]
@@ -642,7 +640,7 @@ mutate(Ik = Am/AQY)%>%
 mutate(Date = "20230510") %>%
 mutate(Plate = "Plate6") %>%
 mutate(Spat.ID.PAM = paste0(Date,"_",Plate,"_",Spat.ID)) %>%
-write_csv(., "RAnalysis/output/Plate6_pi_curve_pars_NLS_fixedparms.csv")
+write_csv(., "Output/Plate6_pi_curve_pars_NLS_fixedparms.csv")
 ```
 
 Plot curve over data points.  
@@ -660,7 +658,7 @@ augmented$ID <-augmented$Spat.ID
 Aug <- augmented %>% separate(ID, c("Sp", "Num", "Type"))
 
 #all colonies together
-pdf("RAnalysis/output/Plate6_PI_Curve_Fit_Plots.pdf")
+pdf("Output/Plate6_PI_Curve_Fit_Plots.pdf")
 PI.curves <- Aug %>%
 ggplot(aes(x=PAR, y=ETR, color=Spat.ID))+
   geom_point() + 
@@ -673,13 +671,7 @@ PI.curves
 dev.off()
 
 ```
-
-
-
-
-
-
-
+#viziualisation of the data point distribution 
 ```{r}
 PI.params <- rbind(nls_data1, nls_data2, nls_data3, nls_data4, nls_data5, nls_data6)
 
@@ -700,7 +692,7 @@ ggplot(data = PI.params, aes(x = Size.mm2, y = value)) +
   geom_point() +
   facet_wrap(~metric, scales = "free_y")
 ```
-
+#some outlier are present and need to be remove from the dataset 
 Remove Outliers
 ```{r}
 Am <- PI.params %>%
@@ -726,7 +718,7 @@ ggplot(data = PI.params, aes(x = Size.mm2, y = value)) +
   geom_point() +
   facet_wrap(~metric, scales = "free_y")
 
-write_csv(PI.params, "RAnalysis/output/PI.params.csv")
+write_csv(PI.params, "Output/PI.params.csv")
 
 ggplot(data = PI.params, aes(x = log10(Size.mm2+1), y = log10(value+1))) +
   geom_point() +
@@ -734,7 +726,7 @@ ggplot(data = PI.params, aes(x = log10(Size.mm2+1), y = log10(value+1))) +
 
 ```
 
-Plot metrics as a function of Spat Area
+#Plot metrics as a function of Spat Area
 ```{r}
 
 size <- ggplot(data = PI.params, aes(x = log10(Size.mm2+1), y = log10(value+1))) +
@@ -745,9 +737,87 @@ size <- ggplot(data = PI.params, aes(x = log10(Size.mm2+1), y = log10(value+1)))
   theme_classic()
 size
 
+plots <- lapply(unique(PI.params$RV), function(param) {
+  df <- subset(PI.params, RV == param)
+  
+  ggplot(df, aes(x = log10(Size.mm2 + 1), y = log10(value + 1))) +
+    stat_poly_line(color = "cyan2", linewidth = 1, se = TRUE, 
+                   fill = "darkslategray3", alpha = 0.2) +   # regression line + SE ribbon
+    stat_poly_eq(use_label(c("eq", "R2", "P")), size = 4) +  # equation + R²
+    geom_point(color = "darkgray", size = 2, stroke = 0.7, shape = 21, fill = "darkgray") + # clear points
+    theme_classic(base_size = 14) +
+    ggtitle(param)
+})
 
+plots[[1]]
+plots[[2]]
+plots[[3]]
 
+ggsave("Output/electron_transport_rate.png", plot = plots[[1]], width = 8, height = 6, dpi = 300)
+ggsave("Output/Photochemical_efficiency.png", plot = plots[[2]], width = 8, height = 6, dpi = 300)
+ggsave("Output/Saturating_irradiance.png", plot = plots[[3]], width = 8, height = 6, dpi = 300)
 ```
+#need to move to linear model on Saturating irradiance because only one significant after log10
+#R2 explain only 4% of the data which is very low 
+
+#Statistic of the linear model 
+#Distribution of the data
+```{r, warning=FALSE, message=FALSE}
+#Histogram vizualisation 
+hist(PI.params$Size.mm2, main = "Histogram of Respiration Rates",
+     xlab = "Size.mm2", col = "lightblue", breaks = 15)
+
+#QQ-plot
+qqnorm(PI.params$Size.mm2)
+qqline(PI.params$Size.mm2, col = "red", lwd = 2)
+```
+#The histogram and the QQ plot don't show me an very good normalisation so a shapiro test need to be run to see what it's look like 
+
+```{r}
+shapiro.test(PI.params$Size.mm2)
+```
+#Shapiro test has a significant value, p-value= <2.2e-16 so we can reject H0 but a transforamtion need to be operate 
+
+```{r}
+#log10 transformation 
+PI.params$Size.mm2_log10 <- log10(PI.params$Size.mm2 + 1)
+
+# Check normality after log10 transformation
+shapiro.test(log10(PI.params$Size.mm2 + 1))
+```
+
+```{r}
+#homogeneity of variance  with heteroskedasticity 
+
+#what's left after filtering 
+subset(PI.params, RV == "Saturating irradiance")
+#counting valid row
+sum(!is.na(subset(PI.params, RV == "Saturating irradiance")$Size.mm2_log10) &
+    !is.na(subset(PI.params, RV == "Saturating irradiance")$value))
+
+model_PI <- lm(value ~ Size.mm2_log10, data = subset(PI.params, RV == "Saturating irradiance"))
+plot(model_PI, which = 1) 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Plot metrics as a function of Polyp Number
 ```{r}
