@@ -287,7 +287,7 @@ p1 <- ggplot(data = oxygen.bio, aes(x = Size.mm2, y = R.nmol.mm2.min)) +
   geom_point(color = "darkgray", size = 2, stroke = 0.7, shape = 21, fill = "darkgray") +
   theme_classic(base_size = 14)
 
-ggsave("size_mm2.png", plot = p1, width = 8, height = 6, dpi = 300)
+ggsave("Output/size_mm2.png", plot = p1, width = 8, height = 6, dpi = 300)
 
 #Plot Resp as a function of Size
 
@@ -305,7 +305,7 @@ p2 <- ggplot(oxygen.bio, aes(x = log10(Size.mm2 + 1), y = log10(R.nmol.mm2.min +
   geom_point(color = "darkgray", size = 2, stroke = 0.7, shape = 21, fill = "darkgray") + # clear points
   theme_classic(base_size = 14)
 
-ggsave("size_mm2_+1.png", plot = p1, width = 8, height = 6, dpi = 300)
+ggsave("Output/size_mm2_+1.png", plot = p2, width = 8, height = 6, dpi = 300)
 ```
 Comparing the 3 model and using the R2 we can notice that the model of number of polyp is the a great model because R2=<0.01 so it's mean we force the the model and the mean can be enough 
 The R2=0.06 explain only 6% of the variation of our oxygen data and it can be because of the noice too prononce in the data or just not a clear linear trend. This is the R2 for sizes 
@@ -315,4 +315,59 @@ Save as .csv file.
 write.csv(oxygen.bio, paste0("Output/Spis_spat_RespRates.csv", sep="")) #save final file
 ```
 
+Statistic of the linear model 
+Distribution of the data
+```{r, warning=FALSE, message=FALSE}
+#Histogram vizualisation 
+hist(oxygen.bio$R.nmol.mm2.min, main = "Histogram of Respiration Rates",
+     xlab = "R.nmol.mm2.min", col = "lightblue", breaks = 15)
+
+#QQ-plot
+qqnorm(oxygen.bio$R.nmol.mm2.min)
+qqline(oxygen.bio$R.nmol.mm2.min, col = "red", lwd = 2)
+```
+#The histogram and the QQ plot don't show me an very good normalisation so a shapiro test need to be run to see what it's look like 
+```{r, warning=FALSE, message=FALSE}
+shapiro.test(oxygen.bio$R.nmol.mm2.min)
+
+```
+#the shapiro test confirm to us that the data is not normal (p-value= 6.293e-06, reject H0) and we will need to do an transformation for the next step
+```{r, warning=FALSE, message=FALSE}
+#log10 transfornation 
+oxygen.bio$R_log10 <- log10(oxygen.bio$R.nmol.mm2.min + 1)
+oxygen.bio$Size_log10 <- log10(oxygen.bio$Size.mm2 + 1)
+
+```
+
+#check of the normality with a shapiro test 
+```{r, warning=FALSE, message=FALSE}
+# Check normality after log10 transformation
+shapiro.test(log10(oxygen.bio$R.nmol.mm2.min + 1))
+shapiro.test(log10(oxygen.bio$Size.mm2 + 1))
+
+```
+
+#homogeneity of variance  with heteroskedasticity 
+```{r, warning=FALSE, message=FALSE}
+model <- lm(R_log10 ~ Size_log10, data = oxygen.bio)
+plot(model, which = 1)  # Residuals vs Fitted
+
+```
+#because my data looks heteroskedasticity = spread increases or decreases we will do a Breusch-Pagan Test
+```{r, warning=FALSE, message=FALSE}
+library(lmtest)
+bptest(model)
+```
+because the p-value is significant, we will use a robust standard errors because heteroskedasticity 
+```{r, warning=FALSE, message=FALSE}
+library(sandwich)
+coeftest(model, vcov = vcovHC(model, type = "HC"))
+```
+#R2
+```{r, warning=FALSE, message=FALSE}
+model <- lm(R_log10 ~ Size_log10, data = oxygen.bio)
+
+summary(model)$r.squared       #R2
+summary(model)$adj.r.squared   #Adjusted R2
+```
 
