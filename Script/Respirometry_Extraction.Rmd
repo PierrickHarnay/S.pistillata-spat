@@ -146,10 +146,8 @@ Sample.Info<-read.csv("Data/Spat_Info.csv") #information on life stage, number o
 
 Merge Resp values with sample info for data visualization, outlier removal, and statistical testing  
 ```{r, warning=FALSE, message=FALSE}
-###### BECAUSE SAMPLE.INFO IS AN CHARACTER AND NOT RESP.RATES SOME CHANGE NEED TO APPEAR #########
-
-Sample.Info$Sample.ID <- as.character(Sample.Info$Sample.ID)
-Resp.Rates$Sample.ID  <- as.character(Resp.Rates$Sample.ID)
+Sample.Info$Sample.ID <- as.character(Sample.Info$Sample.ID) #make sample id into character
+Resp.Rates$Sample.ID  <- as.character(Resp.Rates$Sample.ID) #make sample id into character
 
 oxygen <-left_join(Sample.Info, Resp.Rates, by="Sample.ID") #add respiration data
 colnames(oxygen)[colnames(oxygen) == 'Intercept'] <- 'Resp.Intercept' #rename to specify Respiration
@@ -189,7 +187,6 @@ meanRblank<-mean(blank_data$R.umol.min) #mean R phase blanks
 ```
 
 Vizualisation of the data per plates 
-
 ```{r}
 oxygen$code<-paste(oxygen$Date, oxygen$Plate.ID)
 plot(oxygen$R.umol.min~as.factor(oxygen$code), ylab="umol O2 min-1")
@@ -232,10 +229,9 @@ ggplot(oxygen, aes(R.umol.min.corr, Plate.ID)) +
   geom_point()
 
 ```
-Need to remive the outlier who shift the trend and also remve the negative value because erelevant on what we want to do
+Need to remove the outlier at the low end and also keep only negative values because in the dark positive values (photosyntheis) of respiration rate (draw down of Oxygen) should not be possible.
 
-Normalize to biologically relevant measure. Here, normalize to size of spat. This can be substituted or changed for larval size/volume as well.  
-
+Normalize to biologically relevant measure. Here, normalize to size of spat, or larval size or volume as well.  
 ```{r, warning=FALSE, message=FALSE}
 oxygen.bio <- oxygen %>% filter(Type == "Coral") #isolate only biological samples and drop unused factor levels 
 oxygen.bio <- droplevels(oxygen.bio) #drop unused factor levels
@@ -260,7 +256,7 @@ ggplot(oxygen.bio, aes(R.nmol.mm2.min, Plate.ID)) +
 
 
 ```
-Ploting the data with the different function with a regression as Polyp number/ size 
+Plotting the data as a regression of respiration as a function of Polyp number
 ```{r}
 ggplot(oxygen.bio, aes(R.nmol.mm2.min, Plate.ID,)) + 
   geom_point()
@@ -271,6 +267,20 @@ ggplot(data = oxygen.bio, aes(x = as.numeric(Polyp.Number), y = R.nmol.mm2.min))
   stat_poly_eq(use_label(c("eq", "R2","P")), size = 4) +
   geom_point() +
   theme_classic()
+
+p1 <- ggplot(data = oxygen.bio, aes(x = as.numeric(Polyp.Number), y = R.nmol.mm2.min)) +
+  stat_poly_line(color = "cyan2", linewidth = 1, se = TRUE, 
+                 fill = "darkslategray3", alpha = 0.2) +
+  stat_poly_eq(use_label(c("eq", "R2","P")), size = 4) +
+  geom_point(color = "darkgray", size = 2, stroke = 0.7, shape = 21, fill = "darkgray") +
+  theme_classic(base_size = 14)
+
+ggsave("Output/respiration_polyp_number.png", plot = p1, width = 8, height = 6, dpi = 300)
+
+
+resp.polyp.lm <- lm(R.nmol.mm2.min~Polyp.Number, data = oxygen.bio)
+
+
 
 #Plot Resp as a function of Size
 
@@ -316,24 +326,70 @@ write.csv(oxygen.bio, paste0("Output/Spis_spat_RespRates.csv", sep="")) #save fi
 ```
 
 Statistic of the linear model 
-Distribution of the data
+
+testing the assumptions of linear regression Distribution of the data
 ```{r, warning=FALSE, message=FALSE}
-#Histogram vizualisation 
-hist(oxygen.bio$R.nmol.mm2.min, main = "Histogram of Respiration Rates",
+
+#model 
+model <- lm((R.nmol.mm2.min+1)^0.333 ~ oxygen.bio$Size.mm2, data = oxygen.bio)
+
+model$residuals
+
+#Histogram vizualisation for normality of data
+hist(model$residuals, main = "Histogram of Respiration Rates",
      xlab = "R.nmol.mm2.min", col = "lightblue", breaks = 15)
 
-#QQ-plot
-qqnorm(oxygen.bio$R.nmol.mm2.min)
-qqline(oxygen.bio$R.nmol.mm2.min, col = "red", lwd = 2)
+#QQ-plot for normality of data
+qqnorm(model$residuals)
+qqline(model$residuals, col = "red", lwd = 2)
+
+#check for homoscedasticity
+plot(model, which = 1)  # Residuals vs Fitted
+
+
+install.packages("mblm")
+
+# Load package
+library(mblm)
+
+# Fit Theil-Sen regression (median-based linear model)
+modelTS <- mblm(R.nmol.mm2.min ~ Size.mm2, repeated = FALSE, data = oxygen.bio)  # Use repeated = TRUE for Siegel’s method
+
+# Summary of model
+summary(modelTS)
+
+coef(modelTS)
+
+# Plot the regression
+plot(oxygen.bio$Size.mm2, oxygen.bio$R.nmol.mm2.min)
+abline(modelTS, col = "red")
+
+
+p2 <- ggplot(oxygen.bio, aes(x = log10(Size.mm2 + 1), y = log10(R.nmol.mm2.min + 1))) +
+#  stat_poly_line(color = "cyan2", linewidth = 1, se = TRUE, 
+#                 fill = "darkslategray3", alpha = 0.2) +   # blue line + transparent (fill) SE ribbon
+#  stat_poly_eq(use_label(c("eq", "R2", "P")), size = 4) +
+  geom_point(color = "darkgray", size = 2, stroke = 0.7, shape = 21, fill = "darkgray") + # clear points
+  theme_classic(base_size = 14)
+
+ggsave("Output/size_mm2_+1.png", plot = p2, width = 8, height = 6, dpi = 300)
+
+
 ```
+
+
+
+
+
+
 #The histogram and the QQ plot don't show me an very good normalisation so a shapiro test need to be run to see what it's look like 
 ```{r, warning=FALSE, message=FALSE}
-shapiro.test(oxygen.bio$R.nmol.mm2.min)
+shapiro.test(model$residuals)
 
 ```
 #the shapiro test confirm to us that the data is not normal (p-value= 6.293e-06, reject H0) and we will need to do an transformation for the next step
 ```{r, warning=FALSE, message=FALSE}
-#log10 transfornation 
+#log10 transformation 
 oxygen.bio$R_log10 <- log10(oxygen.bio$R.nmol.mm2.min + 1)
 oxygen.bio$Size_log10 <- log10(oxygen.bio$Size.mm2 + 1)
 

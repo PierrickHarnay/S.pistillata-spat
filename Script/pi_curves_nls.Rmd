@@ -787,16 +787,22 @@ shapiro.test(log10(PI.params$Size.mm2 + 1))
 ```
 
 ```{r}
-#homogeneity of variance  with heteroskedasticity 
+#regression for Ik
+model_Ik <- lm(log10(value) ~ Size.mm2, data = subset(PI.params, metric == "Ik"))
 
-#what's left after filtering 
-subset(PI.params, RV == "Saturating irradiance")
-#counting valid row
-sum(!is.na(subset(PI.params, RV == "Saturating irradiance")$Size.mm2_log10) &
-    !is.na(subset(PI.params, RV == "Saturating irradiance")$value))
+#Histogram vizualisation for normality of data
+hist(model_Ik$residuals, main = "Histogram of Respiration Rates",
+     xlab = "R.nmol.mm2.min", col = "lightblue", breaks = 15)
 
-model_PI <- lm(value ~ Size.mm2_log10, data = subset(PI.params, RV == "Saturating irradiance"))
-plot(model_PI, which = 1) 
+#QQ-plot for normality of data
+qqnorm(model_Ik$residuals)
+qqline(model_Ik$residuals, col = "red", lwd = 2)
+
+#check for homoscedasticity
+plot(model_Ik, which = 1)  # Residuals vs Fitted
+
+summary(model_Ik)
+
 ```
 
 
