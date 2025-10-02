@@ -1,0 +1,717 @@
+---
+title: "SEM_polyp_chara"
+output: html_document
+---
+
+Load all th packages needs for the code
+```{r}
+## load libraries
+library(ggplot2)
+library(readr)
+library(dplyr)
+library(tidyverse)
+library(gridExtra)
+library(ggpubr)
+library(lubridate)
+library(cowplot)
+library(ggthemes)
+library(patchwork)
+```
+
+```{r}
+#loading data
+sem <- read_csv("Data/Mineral/SEM_polyp_diameters.csv")
+
+```
+```{r}
+#cleaning data and prepare the data for the first analysis 
+#removing the Na presented in the dataset
+
+sem_clean_data <- sem[rowSums(is.na(sem)) != ncol(sem), ]
+
+```
+
+```{r}
+#Define for each number of polyp spat a color different 
+#polyp_colors <- c(
+#  "1" = "red",
+#  "2" = "blue",
+#  "3" = "green",
+#  "4" = "purple",
+#  "5" = "orange",
+#  "6" = "gray",
+#  "7" = "black",
+#  "8" = "yellow",
+#  "9" ="pink",
+#  "10" = "darkblue"
+#  )
+
+#ploting the coralite diameters with boxplot and point repartition 
+coralite_diameters <- ggplot(sem_clean_data, aes(x = factor(Polyp_number),
+                  y = Corallite_Diameter,
+                  fill = factor(Polyp_number),
+                  color = factor(Polyp_number))) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.5) +
+  geom_jitter(width = 0.2, size = 1, alpha = 0.8) +
+  scale_fill_tableau(palette = "Jewel Bright") +
+  scale_color_tableau(palette = "Jewel Bright") +
+  labs(x = "Number of polyps per spat",
+       y = "Corallite diameter (µm)",
+       fill = "Polyp Number",
+       color = "Polyp Number") +
+  theme_minimal(base_size = 25)+
+  theme( axis.title.x = element_text(size = 12),     # X-axis title
+    axis.title.y = element_text(size = 12),     # Y-axis title
+    axis.text.x  = element_text(size = 12),     # X-axis tick labels
+    axis.text.y  = element_text(size = 12),     # Y-axis tick labels
+    legend.title = element_text(size = 12),     # Legend titles
+    legend.text  = element_text(size = 12)      # Legend labels
+    )
+
+ggsave("Output/coralite_diameters.png", plot = coralite_diameters, width = 10, height = 5, dpi = 500)
+
+#plotting the data with the same concept to vizualize the point distribution of the corallite diameters in µm but via violont plot 
+#ggplot(sem_clean_data, aes(x = factor(Polyp_number),
+ #                 y = Corallite_Diameter,
+  #              fill = factor(Polyp_number),
+   #               color = factor(Polyp_number))) +
+  #geom_violin(outlier.shape = NA, alpha = 0.5) +
+  #geom_jitter(width = 0.2, size = 2, alpha = 0.8) +
+  #scale_fill_tableau(palette = "Jewel Bright") +
+  #scale_color_tableau(palette = "Jewel Bright") +
+  #labs(x = "Number of polyps per spat",
+  #     y = "Corallite diameter (µm)",
+  #     fill = "Polyp Number",
+  #     color = "Polyp Number") +
+  #theme_minimal(base_size = 14)
+
+
+#ploting the primary septa with boxplot and point repartition 
+primary_septa <- ggplot(sem_clean_data, aes(x = factor(Polyp_number),
+                  y = Primary_septa,
+                  fill = factor(Polyp_number),
+                  color = factor(Polyp_number))) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.5) +
+  geom_jitter(width = 0.2, size = 1, alpha = 0.8) +
+  scale_fill_tableau(palette = "Jewel Bright") +
+  scale_color_tableau(palette = "Jewel Bright") +
+  labs(x = "Number of polyps per spat",
+       y = "Primary septa width (µm)",
+       fill = "Polyp Number",
+       color = "Polyp Number") +
+  theme_minimal(base_size = 14)+ 
+   theme( axis.title.x = element_text(size = 12),     # X-axis title
+    axis.title.y = element_text(size = 12),     # Y-axis title
+    axis.text.x  = element_text(size = 12),     # X-axis tick labels
+    axis.text.y  = element_text(size = 12),     # Y-axis tick labels
+    legend.title = element_text(size = 12),     # Legend titles
+    legend.text  = element_text(size = 12)      # Legend labels
+    )
+
+ggsave("Output/primary_septa.png", plot = primary_septa, width = 10, height = 5, dpi = 500)
+
+#ploting the secondary septa with boxplot and point repartition 
+secondary_septa <- ggplot(sem_clean_data, aes(x = factor(Polyp_number),
+                  y = Secondary_septa,
+                  fill = factor(Polyp_number),
+                  color = factor(Polyp_number))) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.5) +
+  geom_jitter(width = 0.2, size = 1, alpha = 0.8) +
+  scale_fill_tableau(palette = "Jewel Bright") +
+  scale_color_tableau(palette = "Jewel Bright") +
+  labs(x = "Number of polyps per spat",
+       y = "Secondary septa width (µm)",
+       fill = "Polyp Number",
+       color = "Polyp Number") +
+  theme_minimal(base_size = 14)+ 
+   theme( axis.title.x = element_text(size = 12),     # X-axis title
+    axis.title.y = element_text(size = 12),     # Y-axis title
+    axis.text.x  = element_text(size = 12),     # X-axis tick labels
+    axis.text.y  = element_text(size = 12),     # Y-axis tick labels
+    legend.title = element_text(size = 12),     # Legend titles
+    legend.text  = element_text(size = 12)      # Legend labels
+    )
+
+ggsave("Output/secondary_septa.png", plot = secondary_septa, width = 10, height = 5, dpi = 500)
+
+#ploting the tertiary septa with boxplot and point repartition 
+tertiary_septa <- ggplot(sem_clean_data, aes(x = factor(Polyp_number),
+                  y = Tertiary_septa,
+                  fill = factor(Polyp_number),
+                  color = factor(Polyp_number))) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.5) +
+  geom_jitter(width = 0.2, size = 1, alpha = 0.8) +
+  scale_fill_tableau(palette = "Jewel Bright") +
+  scale_color_tableau(palette = "Jewel Bright") +
+  labs(x = "Number of polyps per spat",
+       y = "Tertiary septa width (µm)",
+       fill = "Polyp Number",
+       color = "Polyp Number") +
+  theme_minimal(base_size = 14)+ 
+   theme( axis.title.x = element_text(size = 12),     # X-axis title
+    axis.title.y = element_text(size = 12),     # Y-axis title
+    axis.text.x  = element_text(size = 12),     # X-axis tick labels
+    axis.text.y  = element_text(size = 12),     # Y-axis tick labels
+    legend.title = element_text(size = 12),     # Legend titles
+    legend.text  = element_text(size = 12)      # Legend labels
+    )
+
+ggsave("Output/tertiary_septa.png", plot = tertiary_septa, width = 10, height = 5, dpi = 600)
+
+#ploting the columella with boxplot and point repartition 
+columella <- ggplot(sem_clean_data, aes(x = factor(Polyp_number),
+                  y = Columella,
+                  fill = factor(Polyp_number),
+                  color = factor(Polyp_number))) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.5) +
+  geom_jitter(width = 0.2, size = 1, alpha = 0.8) +
+  scale_fill_tableau(palette = "Jewel Bright") +
+  scale_color_tableau(palette = "Jewel Bright") +
+  labs(x = "Number of polyps per spat",
+       y = "Columella (µm)",
+       fill = "Polyp Number",
+       color = "Polyp Number") +
+  theme_minimal(base_size = 14)+ 
+   theme( axis.title.x = element_text(size = 12),     
+    axis.title.y = element_text(size = 12),     
+    axis.text.x  = element_text(size = 12),    
+    axis.text.y  = element_text(size = 12),     
+    legend.title = element_text(size = 12),     
+    legend.text  = element_text(size = 12)      
+    )
+
+ggsave("Output/columella.png", plot = columella, width = 10, height = 5, dpi = 600)
+
+#merge all the graph in one graph
+# Remove legends from all except one (say p1)
+p1 <- coralite_diameters + theme(legend.position = "none", 
+axis.title.x = element_blank(),
+                 axis.text.x = element_blank(),
+                 axis.ticks.x = element_blank())
+
+p2 <- primary_septa + theme(legend.position = "none", axis.title.x = element_blank(),
+                 axis.text.x = element_blank(),
+                 axis.ticks.x = element_blank())
+
+p3 <- secondary_septa + theme(legend.position = "none", axis.title.x = element_blank(),
+                 axis.text.x = element_blank(),
+                 axis.ticks.x = element_blank())
+
+p4 <- tertiary_septa + theme(legend.position = "none",axis.title.x = element_blank(),
+                 axis.text.x = element_blank(),
+                 axis.ticks.x = element_blank())
+
+p5 <- columella + theme(legend.position = "bottom",           
+    legend.title.align = 0.5,             
+    legend.box = "horizontal") 
+
+# Combine plots
+combined_plot <- (p1 | p2) / (p3 | p4) / (p5)
+
+# Save to file
+ggsave("Output/combined_plot.pdf", combined_plot, width = 12, height = 10)
+
+```
+```{r}
+#let take a look to the assemtpion of the data 
+#create separe file for each variable in the dataset
+
+#CORALLITE
+Corallite <- sem_clean_data[, c("Polyp_number", "Corallite_Diameter")]
+Corallite_without_Na <- na.omit(Corallite)
+
+#removing outlier 
+Corallite_outlier <- Corallite_without_Na %>%
+  filter(
+    Corallite_Diameter >= quantile(Corallite_Diameter, 0.25) - 1.5 * IQR(Corallite_Diameter),
+    Corallite_Diameter <= quantile(Corallite_Diameter, 0.75) + 1.5 * IQR(Corallite_Diameter)
+  )
+
+# Before removing outliers
+ggplot(Corallite_without_Na, aes(x = factor(Polyp_number), y = Corallite_Diameter)) +
+  geom_boxplot() +
+  ggtitle("Before removing outliers")
+
+# After removing outliers
+ggplot(Corallite_outlier, aes(x = factor(Polyp_number), y = Corallite_Diameter)) +
+  geom_boxplot() +
+  ggtitle("After removing outliers")
+
+#PRIMARY SEPTA
+Psepta <- sem_clean_data[, c("Polyp_number", "Primary_septa")]
+Psepta_without_Na <- na.omit(Psepta)
+
+#removing outlier 
+Psepta_outlier <- Psepta_without_Na %>%
+  filter(
+    Primary_septa >= quantile(Primary_septa, 0.25) - 1.5 * IQR(Primary_septa),
+    Primary_septa <= quantile(Primary_septa, 0.75) + 1.5 * IQR(Primary_septa)
+  )
+
+# Before removing outliers
+ggplot(Psepta_without_Na, aes(x = factor(Polyp_number), y = Primary_septa)) +
+  geom_boxplot() +
+  ggtitle("Before removing outliers")
+
+# After removing outliers
+ggplot(Psepta_outlier, aes(x = factor(Polyp_number), y = Primary_septa)) +
+  geom_boxplot() +
+  ggtitle("After removing outliers")
+
+#SECONDARY SEPTA
+Ssepta <- sem_clean_data[, c("Polyp_number", "Secondary_septa")]
+Ssepta_without_Na <- na.omit(Ssepta)
+
+#removing outlier 
+Ssepta_outlier <- Ssepta_without_Na %>%
+  filter(
+    Secondary_septa >= quantile(Secondary_septa, 0.25) - 1.5 * IQR(Secondary_septa),
+    Secondary_septa <= quantile(Secondary_septa, 0.75) + 1.5 * IQR(Secondary_septa)
+  )
+
+# Before removing outliers
+ggplot(Ssepta_without_Na, aes(x = factor(Polyp_number), y = Secondary_septa)) +
+  geom_boxplot() +
+  ggtitle("Before removing outliers")
+
+# After removing outliers
+ggplot(Ssepta_outlier, aes(x = factor(Polyp_number), y = Secondary_septa)) +
+  geom_boxplot() +
+  ggtitle("After removing outliers")
+
+#TERTIARY SEPTA
+Tsepta <- sem_clean_data[, c("Polyp_number", "Tertiary_septa")]
+Tsepta_without_Na <- na.omit(Tsepta)
+
+#removing outlier 
+Tsepta_outlier <- Tsepta_without_Na %>%
+  filter(
+    Tertiary_septa >= quantile(Tertiary_septa, 0.25) - 1.5 * IQR(Tertiary_septa),
+    Tertiary_septa <= quantile(Tertiary_septa, 0.75) + 1.5 * IQR(Tertiary_septa)
+  )
+
+# Before removing outliers
+ggplot(Tsepta_without_Na, aes(x = factor(Polyp_number), y = Tertiary_septa)) +
+  geom_boxplot() +
+  ggtitle("Before removing outliers")
+
+# After removing outliers
+ggplot(Tsepta_outlier, aes(x = factor(Polyp_number), y = Tertiary_septa)) +
+  geom_boxplot() +
+  ggtitle("After removing outliers")
+
+#COLUMELLA SEPTA
+Columella <- sem_clean_data[, c("Polyp_number", "Columella")]
+Columella_without_Na <- na.omit(Columella)
+
+#removing outlier 
+Columella_outlier <- Columella_without_Na %>%
+  filter(
+    Columella >= quantile(Columella, 0.25) - 1.5 * IQR(Columella),
+    Columella <= quantile(Columella, 0.75) + 1.5 * IQR(Columella)
+  )
+
+# Before removing outliers
+ggplot(Columella_without_Na, aes(x = factor(Polyp_number), y = Columella)) +
+  geom_boxplot() +
+  ggtitle("Before removing outliers")
+
+# After removing outliers
+ggplot(Columella_outlier, aes(x = factor(Polyp_number), y = Columella)) +
+  geom_boxplot() +
+  ggtitle("After removing outliers")
+
+```
+```{r}
+Coralite_diameters_clean <- ggplot(Corallite_outlier, aes(x = factor(Polyp_number),
+                  y = Corallite_Diameter,
+                  fill = factor(Polyp_number),
+                  color = factor(Polyp_number))) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.5) +
+  geom_jitter(width = 0.2, size = 1, alpha = 0.8) +
+  scale_fill_tableau(palette = "Jewel Bright") +
+  scale_color_tableau(palette = "Jewel Bright") +
+  labs(x = "Number of polyps per spat",
+       y = "Corallite diameter (µm)",
+       fill = "Polyp Number",
+       color = "Polyp Number") +
+  theme_minimal(base_size = 25)+
+  theme( axis.title.x = element_text(size = 12),     
+    axis.title.y = element_text(size = 12),     
+    axis.text.x  = element_text(size = 12),     
+    axis.text.y  = element_text(size = 12),     
+    legend.title = element_text(size = 12),     
+    legend.text  = element_text(size = 12)      
+    )
+
+ggsave("Output/Coralite_diameters_clean.png", plot = Coralite_diameters_clean, width = 10, height = 5, dpi = 500)
+
+primary_septa_clean <- ggplot(Psepta_outlier, aes(x = factor(Polyp_number),
+                  y = Primary_septa,
+                  fill = factor(Polyp_number),
+                  color = factor(Polyp_number))) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.5) +
+  geom_jitter(width = 0.2, size = 1, alpha = 0.8) +
+  scale_fill_tableau(palette = "Jewel Bright") +
+  scale_color_tableau(palette = "Jewel Bright") +
+  labs(x = "Number of polyps per spat",
+       y = "Primary septa witdh (µm)",
+       fill = "Polyp Number",
+       color = "Polyp Number") +
+  theme_minimal(base_size = 25)+
+  theme( axis.title.x = element_text(size = 12),     
+    axis.title.y = element_text(size = 12),     
+    axis.text.x  = element_text(size = 12),     
+    axis.text.y  = element_text(size = 12),     
+    legend.title = element_text(size = 12),     
+    legend.text  = element_text(size = 12)      
+    )
+
+ggsave("Output/primary_septa_clean.png", plot = primary_septa_clean, width = 10, height = 5, dpi = 500)
+
+secondary_septa_clean <- ggplot(Ssepta_outlier, aes(x = factor(Polyp_number),
+                  y = Secondary_septa,
+                  fill = factor(Polyp_number),
+                  color = factor(Polyp_number))) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.5) +
+  geom_jitter(width = 0.2, size = 1, alpha = 0.8) +
+  scale_fill_tableau(palette = "Jewel Bright") +
+  scale_color_tableau(palette = "Jewel Bright") +
+  labs(x = "Number of polyps per spat",
+       y = "Secondary septa witdh (µm)",
+       fill = "Polyp Number",
+       color = "Polyp Number") +
+  theme_minimal(base_size = 25)+
+  theme( axis.title.x = element_text(size = 12),     
+    axis.title.y = element_text(size = 12),     
+    axis.text.x  = element_text(size = 12),     
+    axis.text.y  = element_text(size = 12),     
+    legend.title = element_text(size = 12),     
+    legend.text  = element_text(size = 12)      
+    )
+
+ggsave("Output/secondary_septa_clean.png", plot = secondary_septa_clean, width = 10, height = 5, dpi = 500)
+
+tertiary_septa_clean <- ggplot(Tsepta_outlier, aes(x = factor(Polyp_number),
+                  y = Tertiary_septa,
+                  fill = factor(Polyp_number),
+                  color = factor(Polyp_number))) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.5) +
+  geom_jitter(width = 0.2, size = 1, alpha = 0.8) +
+  scale_fill_tableau(palette = "Jewel Bright") +
+  scale_color_tableau(palette = "Jewel Bright") +
+  labs(x = "Number of polyps per spat",
+       y = "Tertiary septa witdh (µm)",
+       fill = "Polyp Number",
+       color = "Polyp Number") +
+  theme_minimal(base_size = 25)+
+  theme( axis.title.x = element_text(size = 12),     
+    axis.title.y = element_text(size = 12),     
+    axis.text.x  = element_text(size = 12),     
+    axis.text.y  = element_text(size = 12),     
+    legend.title = element_text(size = 12),     
+    legend.text  = element_text(size = 12)      
+    )
+
+ggsave("Output/tertiary_septa_clean.png", plot = tertiary_septa_clean, width = 10, height = 5, dpi = 500)
+
+columella_clean <- ggplot(Columella_outlier, aes(x = factor(Polyp_number),
+                  y = Columella,
+                  fill = factor(Polyp_number),
+                  color = factor(Polyp_number))) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.5) +
+  geom_jitter(width = 0.2, size = 1, alpha = 0.8) +
+  scale_fill_tableau(palette = "Jewel Bright") +
+  scale_color_tableau(palette = "Jewel Bright") +
+  labs(x = "Number of polyps per spat",
+       y = "Columella (µm)",
+       fill = "Polyp Number",
+       color = "Polyp Number") +
+  theme_minimal(base_size = 25)+
+  theme( axis.title.x = element_text(size = 12),     
+    axis.title.y = element_text(size = 12),     
+    axis.text.x  = element_text(size = 12),     
+    axis.text.y  = element_text(size = 12),     
+    legend.title = element_text(size = 12),     
+    legend.text  = element_text(size = 12)      
+    )
+
+ggsave("Output/columella_clean.png", plot = columella_clean, width = 10, height = 5, dpi = 500)
+
+#merge all the graph with no outlier in one graph
+# Remove legends from all except one 
+P1 <- Coralite_diameters_clean + theme(legend.position = "none", 
+axis.title.x = element_blank(),
+                 axis.text.x = element_blank(),
+                 axis.ticks.x = element_blank())
+
+P2 <- primary_septa_clean + theme(legend.position = "none", axis.title.x = element_blank(),
+                 axis.text.x = element_blank(),
+                 axis.ticks.x = element_blank())
+
+P3 <- secondary_septa_clean + theme(legend.position = "none", axis.title.x = element_blank(),
+                 axis.text.x = element_blank(),
+                 axis.ticks.x = element_blank())
+
+P4 <- tertiary_septa_clean + theme(legend.position = "none",axis.title.x = element_blank(),
+                 axis.text.x = element_blank(),
+                 axis.ticks.x = element_blank())
+
+P5 <- columella_clean + theme(legend.position = "bottom",           
+    legend.title.align = 0.5,             
+    legend.box = "horizontal") 
+
+# Combine plots
+combined_plot_without_outlier <- (P1 | P2) / (P3 | P4) / (P5)
+
+# Save to file
+ggsave("Output/combined_plot_without_outlier.pdf", combined_plot_without_outlier, width = 12, height = 10)
+
+```
+```{r}
+#vizualisation of the data via graph
+#CORALLITE
+hist(Corallite_outlier$Corallite_Diameter,
+     main = "Histogram of Corallite Diameter",
+     xlab = "Corallite Diameter",
+     breaks = 15)
+
+#PRIMARY SEPTA
+hist(Psepta_outlier$Primary_septa,
+     main = "Histogram of Primary septa",
+     xlab = "Primary septa",
+     breaks = 15)
+
+#Secondary SEPTA
+hist(Ssepta_outlier$Secondary_septa,
+     main = "Histogram of Secondary septa",
+     xlab = "Secondary septa",
+     breaks = 15)
+
+#tertiary septa
+hist(Tsepta_outlier$Tertiary_septa,
+     main = "Histogram of Tertiary septa",
+     xlab = "Tertiary septa",
+     breaks = 15)
+
+#COLUMELLA 
+hist(Columella_outlier$Columella,
+     main = "Histogram of Columella",
+     xlab = "Primary columella",
+     breaks = 15)
+
+#Q-Q plot 
+#CORALLITE
+qqnorm(Corallite_outlier$Corallite_Diameter)
+qqline(Corallite_outlier$Corallite_Diameter, col = "red")
+
+#Primary septa
+qqnorm(Psepta_outlier$Primary_septa)
+qqline(Psepta_outlier$Primary_septa, col = "red")
+
+#secondary septa 
+qqnorm(Ssepta_outlier$Secondary_septa)
+qqline(Ssepta_outlier$Secondary_septa, col = "red")
+
+#Tertiary septa 
+qqnorm(Tsepta_outlier$Tertiary_septa)
+qqline(Tsepta_outlier$Tertiary_septa, col = "red")
+
+#Tertiary septa 
+qqnorm(Columella_outlier$Columella)
+qqline(Columella_outlier$Columella, col = "red")
+
+#statistic part
+#normality on coralitte diameter µm 
+shapiro.test(residuals(aov(Corallite_Diameter ~ Polyp_number, data = Corallite_outlier)))
+#normality validated
+#normality on primary septa witdh µm
+shapiro.test(residuals(aov(Primary_septa ~ Polyp_number, data = Psepta_outlier)))
+#normality validated
+#normality on secondary septa witdh µm
+shapiro.test(residuals(aov(Secondary_septa ~ Polyp_number, data = Ssepta_outlier)))
+#normality validated
+#normality on tertiary septa witdh µm
+shapiro.test(residuals(aov(Tertiary_septa ~ Polyp_number, data = Tsepta_outlier)))
+#do not follow the normality need to used a Kruskal-Wallis test 
+#normality on columella witdh µm
+shapiro.test(residuals(aov(Columella ~ Polyp_number, data = Columella_outlier)))
+#normality validated
+
+#ANOVA test
+#CORALLITE
+anova_result_coralitte <- aov(Corallite_Diameter ~ factor(Polyp_number), data = Corallite_outlier)
+summary(anova_result_coralitte)
+#Post-Hoc comparaison 
+tukey_result_coralitte <- TukeyHSD(anova_result_coralitte)
+tukey_result_coralitte
+
+#creation heat map t vizualize the posthoc test
+# Extract Tukey results as a data frame
+tukey_df_coralitte <- as.data.frame(tukey_result_coralitte$'factor(Polyp_number)') %>%
+  rownames_to_column(var = "comparison") %>%
+  select(comparison, `p adj`) %>%
+  separate(comparison, into = c("Group1", "Group2"), sep = "-")
+
+# Create a matrix for plotting
+heatmap_df_coralitte <- tukey_df_coralitte %>%
+  pivot_wider(names_from = Group2, values_from = `p adj`) %>%
+  column_to_rownames("Group1")
+
+# Convert to long format for ggplot
+heatmap_long_coralitte <- heatmap_df_coralitte %>%
+  rownames_to_column("Group1") %>%
+  pivot_longer(-Group1, names_to = "Group2", values_to = "p_value")
+
+# Plot
+ggplot(heatmap_long_coralitte, aes(x = Group1, y = Group2, fill = p_value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "red", high = "white", na.value = "grey90",
+                      name = "p-value") +
+  geom_text(aes(label = round(p_value, 3))) +
+  theme_minimal() +
+  labs(title = "Tukey HSD Pairwise Comparisons coralitte")
+
+##################
+
+#PRIMARY septa
+anova_result_primary <- aov(Primary_septa ~ factor(Polyp_number), data = Psepta_outlier)
+summary(anova_result_primary)
+#Post-Hoc comparaison 
+tukey_result_primary <- TukeyHSD(anova_result_primary)
+tukey_result_primary
+
+#creation heat map t vizualize the posthoc test
+# Extract Tukey results as a data frame
+tukey_df_primary <- as.data.frame(tukey_result_primary$'factor(Polyp_number)') %>%
+  rownames_to_column(var = "comparison") %>%
+  select(comparison, `p adj`) %>%
+  separate(comparison, into = c("Group1", "Group2"), sep = "-")
+
+# Create a matrix for plotting
+heatmap_df_primary <- tukey_df_primary %>%
+  pivot_wider(names_from = Group2, values_from = `p adj`) %>%
+  column_to_rownames("Group1")
+
+# Convert to long format for ggplot
+heatmap_long_primary <- heatmap_df_primary %>%
+  rownames_to_column("Group1") %>%
+  pivot_longer(-Group1, names_to = "Group2", values_to = "p_value")
+
+# Plot
+ggplot(heatmap_long_primary, aes(x = Group1, y = Group2, fill = p_value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "red", high = "white", na.value = "grey90",
+                      name = "p-value") +
+  geom_text(aes(label = round(p_value, 3))) +
+  theme_minimal() +
+  labs(title = "Tukey HSD Pairwise Comparisons primary septa")
+
+##################
+
+#Secondary septa
+anova_result_secondary <- aov(Secondary_septa ~ factor(Polyp_number), data = Ssepta_outlier)
+summary(anova_result_secondary)
+#Post-Hoc comparaison 
+tukey_result_secondary <- TukeyHSD(anova_result_secondary)
+tukey_result_secondary
+
+#creation heat map t vizualize the posthoc test
+# Extract Tukey results as a data frame
+tukey_df_secondary <- as.data.frame(tukey_result_secondary$'factor(Polyp_number)') %>%
+  rownames_to_column(var = "comparison") %>%
+  select(comparison, `p adj`) %>%
+  separate(comparison, into = c("Group1", "Group2"), sep = "-")
+
+# Create a matrix for plotting
+heatmap_df_secondary <- tukey_df_primary %>%
+  pivot_wider(names_from = Group2, values_from = `p adj`) %>%
+  column_to_rownames("Group1")
+
+# Convert to long format for ggplot
+heatmap_long_secondary <- heatmap_df_secondary %>%
+  rownames_to_column("Group1") %>%
+  pivot_longer(-Group1, names_to = "Group2", values_to = "p_value")
+
+# Plot
+ggplot(heatmap_long_secondary, aes(x = Group1, y = Group2, fill = p_value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "red", high = "white", na.value = "grey90",
+                      name = "p-value") +
+  geom_text(aes(label = round(p_value, 3))) +
+  theme_minimal() +
+  labs(title = "Tukey HSD Pairwise Comparisons secondary septa")
+
+##################
+
+#Tertiary septa
+anova_result_tertiary <- aov(Tertiary_septa ~ factor(Polyp_number), data = Tsepta_outlier)
+summary(anova_result_tertiary)
+#Post-Hoc comparaison 
+tukey_result_tertiary <- TukeyHSD(anova_result_tertiary)
+tukey_result_tertiary
+
+#creation heat map t vizualize the posthoc test
+# Extract Tukey results as a data frame
+tukey_df_tertiary <- as.data.frame(tukey_result_tertiary$'factor(Polyp_number)') %>%
+  rownames_to_column(var = "comparison") %>%
+  select(comparison, `p adj`) %>%
+  separate(comparison, into = c("Group1", "Group2"), sep = "-")
+
+# Create a matrix for plotting
+heatmap_df_tertiary <- tukey_df_tertiary %>%
+  pivot_wider(names_from = Group2, values_from = `p adj`) %>%
+  column_to_rownames("Group1")
+
+# Convert to long format for ggplot
+heatmap_long_tertiary <- heatmap_df_tertiary %>%
+  rownames_to_column("Group1") %>%
+  pivot_longer(-Group1, names_to = "Group2", values_to = "p_value")
+
+# Plot
+ggplot(heatmap_long_tertiary, aes(x = Group1, y = Group2, fill = p_value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "red", high = "white", na.value = "grey90",
+                      name = "p-value") +
+  geom_text(aes(label = round(p_value, 3))) +
+  theme_minimal() +
+  labs(title = "Tukey HSD Pairwise Comparisons tertiary septa")
+
+##################
+
+#Columella 
+anova_result_columella <- aov(Columella ~ factor(Polyp_number), data = Columella_outlier)
+summary(anova_result_columella)
+#Post-Hoc comparaison 
+tukey_result_columella <- TukeyHSD(anova_result_columella)
+tukey_result_columella
+
+#creation heat map t vizualize the posthoc test
+# Extract Tukey results as a data frame
+tukey_df_columella <- as.data.frame(tukey_result_columella$'factor(Polyp_number)') %>%
+  rownames_to_column(var = "comparison") %>%
+  select(comparison, `p adj`) %>%
+  separate(comparison, into = c("Group1", "Group2"), sep = "-")
+
+# Create a matrix for plotting
+heatmap_df_columella <- tukey_df_columella %>%
+  pivot_wider(names_from = Group2, values_from = `p adj`) %>%
+  column_to_rownames("Group1")
+
+# Convert to long format for ggplot
+heatmap_long_columella <- heatmap_df_columella %>%
+  rownames_to_column("Group1") %>%
+  pivot_longer(-Group1, names_to = "Group2", values_to = "p_value")
+
+# Plot
+ggplot(heatmap_long_columella, aes(x = Group1, y = Group2, fill = p_value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "red", high = "white", na.value = "grey90",
+                      name = "p-value") +
+  geom_text(aes(label = round(p_value, 3))) +
+  theme_minimal() +
+  labs(title = "Tukey HSD Pairwise Comparisons columella")
+
+```
+
+
