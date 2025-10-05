@@ -213,6 +213,28 @@ ggsave("Output/combined_plot.pdf", combined_plot, width = 12, height = 10)
 
 ```
 ```{r}
+#created average for Primary secondary tertiary septa, corallite diameters, columella etc 
+# Load your data
+SEM_polyp_number_average <- read.csv("Data/SEM_polyp_diameters.csv")
+
+# Calculate averages for Primary_septa grouped by its label column
+avg_primary <- aggregate(df$Primary_septa,
+                         by = list(df$Primary_septa_number),
+                         FUN = mean, na.rm = TRUE)
+
+# Rename columns for clarity
+colnames(avg_primary) <- c("Primary_septa_number", "Mean_Primary_septa")
+
+# View result
+print(avg_primary)
+
+# (Optional) Save the summary as a CSV file
+write.csv(avg_primary, "Average_Primary_Septa.csv", row.names = FALSE)
+
+
+```
+
+```{r}
 #let take a look to the assemtpion of the data 
 #create separe file for each variable in the dataset
 
