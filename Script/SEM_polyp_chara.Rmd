@@ -215,21 +215,65 @@ ggsave("Output/combined_plot.pdf", combined_plot, width = 12, height = 10)
 ```{r}
 #created average for Primary secondary tertiary septa, corallite diameters, columella etc 
 # Load your data
-SEM_polyp_number_average <- read.csv("Data/SEM_polyp_diameters.csv")
+SEM_data <- read.csv("Data/Mineral/SEM_polyp_diameters.csv", stringsAsFactors = FALSE)
+
+# Clean column names (remove spaces and make consistent)
+names(SEM_data) <- trimws(names(SEM_data))
+
+names(SEM_data)
 
 # Calculate averages for Primary_septa grouped by its label column
-avg_primary <- aggregate(df$Primary_septa,
-                         by = list(df$Primary_septa_number),
+avg_primary <- aggregate(SEM_data$Primary_septa,
+                         by = list(SEM_data$Primary_septa_number),
                          FUN = mean, na.rm = TRUE)
 
 # Rename columns for clarity
 colnames(avg_primary) <- c("Primary_septa_number", "Mean_Primary_septa")
 
-# View result
-print(avg_primary)
+write.csv(avg_primary, "Output/Average_Primary_Septa.csv", row.names = FALSE)
+#doing the same process for the others parameter wanted to have result of 
+avg_secondary <- aggregate(SEM_data$Secondary_septa,
+                         by = list(SEM_data$Secondary_septa_number),
+                         FUN = mean, na.rm = TRUE)
 
-# (Optional) Save the summary as a CSV file
-write.csv(avg_primary, "Average_Primary_Septa.csv", row.names = FALSE)
+colnames(avg_secondary) <- c("Secondary_septa_number", "Mean_Secondary_septa")
+write.csv(avg_secondary, "Output/Average_Secondary_Septa.csv", row.names = FALSE)
+
+
+avg_tertiary <- aggregate(SEM_data$Tertiary_septa,
+                         by = list(SEM_data$Tertiary_septa_number),
+                         FUN = mean, na.rm = TRUE)
+
+colnames(avg_tertiary) <- c("Tertiary_septa_number", "Mean_Tertiary_septa")
+write.csv(avg_tertiary, "Output/Average_Tertiary_Septa.csv", row.names = FALSE)
+
+
+avg_corallite <- aggregate(SEM_data$Corallite_Diameter,
+                         by = list(SEM_data$Polyp_number),
+                         FUN = mean, na.rm = TRUE)
+
+colnames(avg_corallite) <- c("Corallite_number", "Mean_Corallite")
+write.csv(avg_corallite, "Output/Average_Corallite.csv", row.names = FALSE)
+
+
+avg_columella <- aggregate(SEM_data$Columella,
+                         by = list(SEM_data$Polyp_number),
+                         FUN = mean, na.rm = TRUE)
+
+colnames(avg_columella) <- c("Columella_number", "Mean_Columella")
+write.csv(avg_columella, "Output/Average_Columella.csv", row.names = FALSE)
+
+#merging all the tables in one dataset 
+# --- Standardize the grouping column name so all can merge ---
+names(avg_primary)[1]   <- "Polyp_ID"
+names(avg_secondary)[1] <- "Polyp_ID"
+names(avg_tertiary)[1]  <- "Polyp_ID"
+names(avg_corallite)[1] <- "Polyp_ID"
+names(avg_columella)[1] <- "Polyp_ID"
+
+# --- Merge all average tables into one dataset ---
+merged_SEM <- Reduce(function(x, y) merge(x, y, by = "Polyp_ID", all = TRUE),
+                     list(avg_primary, avg_secondary, avg_tertiary, avg_corallite, avg_columella))
 
 
 ```
