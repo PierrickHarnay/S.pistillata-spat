@@ -275,8 +275,26 @@ names(avg_columella)[1] <- "Polyp_ID"
 merged_SEM <- Reduce(function(x, y) merge(x, y, by = "Polyp_ID", all = TRUE),
                      list(avg_primary, avg_secondary, avg_tertiary, avg_corallite, avg_columella))
 
+write.csv(merged_SEM, "Output/merged_SEM_data.csv", row.names = FALSE)
+
+#merge the data with the polyp_number 
 
 ```
+
+```{r}
+#plot the result 
+#ploting the coralite diameters with boxplot. AVERAGE of all of them with only few points 
+merged_SEM$Polyp_ID <- as.numeric(as.character(merged_SEM$Polyp_number))
+
+# Create individual plots
+Mean_Primary <- ggplot(merged_SEM, aes(x = Polyp_number, y = Mean_Primary_septa)) +
+  geom_point(color = "steelblue", size = 2) +
+  geom_line(color = "steelblue") +
+  theme_minimal() +
+  labs(title = "Mean Primary Septa across Polyps", x = "Polyp ID", y = "Mean Primary Septa")
+``` 
+
+
 
 ```{r}
 #let take a look to the assemtpion of the data 
