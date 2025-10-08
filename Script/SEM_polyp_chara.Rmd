@@ -16,6 +16,8 @@ library(lubridate)
 library(cowplot)
 library(ggthemes)
 library(patchwork)
+library(multcomp)
+library(multcompView)
 ```
 
 ```{r}
@@ -30,6 +32,470 @@ sem <- read_csv("Data/Mineral/SEM_polyp_diameters.csv")
 sem_clean_data <- sem[rowSums(is.na(sem)) != ncol(sem), ]
 
 ```
+
+```{r}
+############## SECTION WITH THE MEAN DATA AND NOT ALL POINTS ###########################
+#created average for Primary secondary tertiary septa, corallite diameters, columella etc 
+# Load your data
+SEM_data <- read.csv("Data/Mineral/SEM_polyp_diameters.csv", stringsAsFactors = FALSE)
+
+# Clean column names (remove spaces and make consistent)
+names(SEM_data) <- trimws(names(SEM_data))
+
+names(SEM_data)
+
+# Calculate averages for Primary_septa grouped by its label column
+avg_primary <- aggregate(SEM_data$Primary_septa,
+                         by = list(SEM_data$Primary_septa_number),
+                         FUN = mean, na.rm = TRUE)
+
+# Rename columns for clarity
+colnames(avg_primary) <- c("Primary_septa_number", "Mean_Primary_septa")
+
+write.csv(avg_primary, "Output/Average_Primary_Septa.csv", row.names = FALSE)
+#doing the same process for the others parameter wanted to have result of 
+avg_secondary <- aggregate(SEM_data$Secondary_septa,
+                         by = list(SEM_data$Secondary_septa_number),
+                         FUN = mean, na.rm = TRUE)
+
+colnames(avg_secondary) <- c("Secondary_septa_number", "Mean_Secondary_septa")
+write.csv(avg_secondary, "Output/Average_Secondary_Septa.csv", row.names = FALSE)
+
+
+avg_tertiary <- aggregate(SEM_data$Tertiary_septa,
+                         by = list(SEM_data$Tertiary_septa_number),
+                         FUN = mean, na.rm = TRUE)
+
+colnames(avg_tertiary) <- c("Tertiary_septa_number", "Mean_Tertiary_septa")
+write.csv(avg_tertiary, "Output/Average_Tertiary_Septa.csv", row.names = FALSE)
+
+
+avg_corallite <- aggregate(SEM_data$Corallite_Diameter,
+                         by = list(SEM_data$Polyp_number),
+                         FUN = mean, na.rm = TRUE)
+
+colnames(avg_corallite) <- c("Corallite_number", "Mean_Corallite")
+write.csv(avg_corallite, "Output/Average_Corallite.csv", row.names = FALSE)
+
+
+avg_columella <- aggregate(SEM_data$Columella,
+                         by = list(SEM_data$Polyp_number),
+                         FUN = mean, na.rm = TRUE)
+
+colnames(avg_columella) <- c("Columella_number", "Mean_Columella")
+write.csv(avg_columella, "Output/Average_Columella.csv", row.names = FALSE)
+
+#merging all the tables in one dataset 
+# --- Standardize the grouping column name so all can merge ---
+names(avg_primary)[1]   <- "Polyp_ID"
+names(avg_secondary)[1] <- "Polyp_ID"
+names(avg_tertiary)[1]  <- "Polyp_ID"
+names(avg_corallite)[1] <- "Polyp_ID"
+names(avg_columella)[1] <- "Polyp_ID"
+
+# --- Merge all average tables into one dataset ---
+merged_SEM <- Reduce(function(x, y) merge(x, y, by = "Polyp_ID", all = TRUE),
+                     list(avg_primary, avg_secondary, avg_tertiary, avg_corallite, avg_columella))
+
+write.csv(merged_SEM, "Output/merged_SEM_data.csv", row.names = FALSE)
+
+
+```
+
+```{r}
+############## SECTION WITH THE MEAN DATA AND NOT ALL POINTS ###########################
+#plot the result 
+#loading data from the file merged_SEM_data
+merged_SEM_data <- read.csv("Output/merged_SEM_data.csv", stringsAsFactors = FALSE)
+
+#created the file where we extract the number of polyp via the name of 'Polyp_ID' 
+merged_SEM_data_polyp <- read.csv("Output/merged_SEM_data.csv")
+
+# Extract the number after 'polyp' and before the next underscore
+merged_SEM_data_polyp <- merged_SEM_data_polyp %>%
+ mutate(Polyp_Number = as.numeric(str_extract(Polyp_ID, "(?<=polyp)\\d+")))
+
+#ploting the coralite diameters with boxplot. AVERAGE of all of them with only few points 
+merged_SEM_data_polyp$Polyp_Number <- as.numeric(as.character(merged_SEM_data_polyp$Polyp_Number))
+
+head(merged_SEM_data_polyp)
+colnames(merged_SEM_data_polyp)
+
+#creation of a file with only the 9 first raw of the dataset with the Corallite and Columella diameters
+# Keep only the first 9 rows
+Corallite_columella_merge <- merged_SEM_data_polyp[1:9, ]
+
+# Save to a new CSV file
+write.csv(Corallite_columella_merge, "Corallite_columella_merge.csv", row.names = FALSE)
+
+#remove column Polyp_number to the dataset
+Corallite_columella_merge <- Corallite_columella_merge[ , !(names(Corallite_columella_merge) %in% "Polyp_Number")]
+
+#rename the column Polyp_ID to Polyp_Number 
+Corallite_columella_merge <- Corallite_columella_merge %>%
+  rename(
+    Polyp_Number = Polyp_ID
+  )
+
+####starting to plot the data 
+#PRIMARY
+avg_primary <- ggplot(merged_SEM_data_polyp, aes(x = factor(Polyp_Number), y = Mean_Primary_septa))+
+  geom_boxplot(outlier.shape = NA, fill = "darkslategray3", width = 0.5, alpha = 0.5) +  
+  geom_jitter(width = 0.5, color = "black", size = 1, alpha = 0.5) + 
+  labs(x = "Polyp number", y = "Mean primary septa width (µm)") +
+  theme_minimal()
+
+ggsave("Output/avg_primary.png", plot = avg_primary, width = 10, height = 5, dpi = 400)
+
+#SECONDARY
+avg_secondary <- ggplot(merged_SEM_data_polyp, aes(x = factor(Polyp_Number), y = Mean_Secondary_septa)) + geom_boxplot(outlier.shape = NA, fill = "darkslategray3", width = 0.5, alpha = 0.5) +  
+  geom_jitter(width = 0.2, color = "black", size = 1, alpha = 0.5)+ 
+  labs(x = "Polyp number", y = "Mean secondary septa width (µm)") +
+  theme_minimal()
+
+ggsave("Output/avg_secondary.png", plot = avg_secondary, width = 10, height = 5, dpi = 400)
+
+#filter the dataset and keep only the 2 groups where we have data points 
+filtered_data <- merged_SEM_data_polyp %>% 
+  filter(Polyp_Number %in% c(3, 5))
+
+avg_tertiary <- ggplot(merged_SEM_data_polyp, aes(x = factor(Polyp_Number), y = Mean_Tertiary_septa)) +
+  geom_boxplot(outlier.shape = NA, fill = "darkslategray3", width = 0.5, alpha = 0.5) +  
+  geom_jitter(width = 0.2, color = "black", size = 1, alpha = 0.5) +  
+  labs(x = "Polyp number", y = "Mean tertiary septa width (µm)") +
+  theme_minimal()
+
+ggsave("Output/avg_tertiary.png", plot = avg_tertiary, width = 10, height = 5, dpi = 400)
+
+avg_columella <- ggplot(Corallite_columella_merge, aes(x = factor(Polyp_Number), y = Mean_Columella)) +
+  geom_jitter(width = 0.2, color = "black", size = 1, alpha = 0.5) +  
+  labs(x = "Polyp number", y = "Mean columella diameter (µm)") +
+  theme_minimal()
+
+ggsave("Output/avg_columella.png", plot = avg_columella, width = 10, height = 5, dpi = 400)
+
+
+avg_corallite <- ggplot(Corallite_columella_merge, aes(x = factor(Polyp_Number), y = Mean_Corallite)) +
+  geom_jitter(width = 0.2, color = "black", size = 1, alpha = 0.5) +
+  labs(
+    x = "Polyp number", y = "Mean corallite diameter (µm)") +
+  theme_minimal()
+
+ggsave("Output/avg_corallite.png", plot = avg_corallite, width = 10, height = 5, dpi = 400)
+
+#Merging all the graph all together 
+avg1 <- avg_corallite + theme(legend.position = "bottom",           
+    legend.title.align = 0.5,             
+    legend.box = "horizontal") 
+
+avg2 <- avg_primary + theme(legend.position = "bottom",           
+    legend.title.align = 0.5,             
+    legend.box = "horizontal") 
+
+avg3 <- avg_secondary + theme(legend.position = "bottom",           
+    legend.title.align = 0.5,             
+    legend.box = "horizontal") 
+avg4 <- avg_tertiary + theme(legend.position = "bottom",           
+    legend.title.align = 0.5,             
+    legend.box = "horizontal") 
+
+avg5 <- avg_columella + theme(legend.position = "bottom",           
+    legend.title.align = 0.5,             
+    legend.box = "horizontal") 
+
+# Combine plots
+avg_combined_plot <- (avg1 | avg2) / (avg3 | avg4) / (avg5)+
+  plot_annotation(tag_levels = 'A')
+
+# Save to file
+ggsave("Output/avg_combined_plot.pdf", avg_combined_plot, width = 12, height = 10)
+
+``` 
+```{r}
+############## SECTION WITH THE MEAN DATA AND NOT ALL POINTS ###########################
+#let take a look to the assemtpion of the data 
+#create separe file for each variable in the dataset
+
+#CORALLITE
+Corallite <- merged_SEM_data_polyp[, c("Polyp_Number", "Mean_Corallite")]
+Corallite_without_Na <- na.omit(Corallite)
+
+#removing outlier 
+Corallite_outlier <- Corallite_without_Na %>%
+  filter(
+    Mean_Corallite >= quantile(Mean_Corallite, 0.25) - 1.5 * IQR(Mean_Corallite),
+    Mean_Corallite <= quantile(Mean_Corallite, 0.75) + 1.5 * IQR(Mean_Corallite)
+  )
+
+# Before removing outliers
+ggplot(Corallite_without_Na, aes(x = factor(Polyp_Number), y = Mean_Corallite)) +
+  geom_boxplot() +
+  ggtitle("Before removing outliers")
+
+# After removing outliers
+ggplot(Corallite_outlier, aes(x = factor(Polyp_Number), y = Mean_Corallite)) +
+  geom_boxplot() +
+  ggtitle("After removing outliers")
+
+#PRIMARY SEPTA
+Psepta <- merged_SEM_data_polyp[, c("Polyp_number", "Mean_Primary_septa")]
+Psepta_without_Na <- na.omit(Psepta)
+
+#removing outlier 
+Psepta_outlier <- Psepta_without_Na %>%
+  filter(
+    Mean_Primary_septa >= quantile(Mean_Primary_septa, 0.25) - 1.5 * IQR(Mean_Primary_septa),
+    Mean_Primary_septa <= quantile(Mean_Primary_septa, 0.75) + 1.5 * IQR(Mean_Primary_septa)
+  )
+
+# Before removing outliers
+ggplot(Psepta_without_Na, aes(x = factor(Polyp_Number), y = Mean_Primary_septa)) +
+  geom_boxplot() +
+  ggtitle("Before removing outliers")
+
+# After removing outliers
+ggplot(Psepta_outlier, aes(x = factor(Polyp_Number), y = Mean_Primary_septa)) +
+  geom_boxplot() +
+  ggtitle("After removing outliers")
+
+#SECONDARY SEPTA
+Ssepta <- merged_SEM_data_polyp[, c("Polyp_number", "Mean_Secondary_septa")]
+Ssepta_without_Na <- na.omit(Ssepta)
+
+#removing outlier 
+Ssepta_outlier <- Ssepta_without_Na %>%
+  filter(
+    Mean_Secondary_septa >= quantile(Mean_Secondary_septa, 0.25) - 1.5 * IQR(Mean_Secondary_septa),
+    Mean_Secondary_septa <= quantile(Mean_Secondary_septa, 0.75) + 1.5 * IQR(Mean_Secondary_septa)
+  )
+
+# Before removing outliers
+ggplot(Ssepta_without_Na, aes(x = factor(Polyp_Number), y = Mean_Secondary_septa)) +
+  geom_boxplot() +
+  ggtitle("Before removing outliers")
+
+# After removing outliers
+ggplot(Ssepta_outlier, aes(x = factor(Polyp_Number), y = Mean_Secondary_septa)) +
+  geom_boxplot() +
+  ggtitle("After removing outliers")
+
+#TERTIARY SEPTA
+Tsepta <- merged_SEM_data_polyp[, c("Polyp_number", "Mean_Tertiary_septa")]
+Tsepta_without_Na <- na.omit(Tsepta)
+
+#removing outlier 
+Tsepta_outlier <- Tsepta_without_Na %>%
+  filter(
+    Mean_Tertiary_septa >= quantile(Mean_Tertiary_septa, 0.25) - 1.5 * IQR(Mean_Tertiary_septa),
+    Mean_Tertiary_septa <= quantile(Mean_Tertiary_septa, 0.75) + 1.5 * IQR(Mean_Tertiary_septa)
+  )
+
+# Before removing outliers
+ggplot(Tsepta_without_Na, aes(x = factor(Polyp_Number), y = Mean_Tertiary_septa)) +
+  geom_boxplot() +
+  ggtitle("Before removing outliers")
+
+# After removing outliers
+ggplot(Tsepta_outlier, aes(x = factor(Polyp_Number), y = Mean_Tertiary_septa)) +
+  geom_boxplot() +
+  ggtitle("After removing outliers")
+
+#COLUMELLA SEPTA
+Columella <- merged_SEM_data_polyp[, c("Polyp_number", "Mean_Columella")]
+Columella_without_Na <- na.omit(Columella)
+
+#removing outlier 
+Columella_outlier <- Columella_without_Na %>%
+  filter(
+    Mean_Columella >= quantile(Mean_Columella, 0.25) - 1.5 * IQR(Mean_Columella),
+    Mean_Columella <= quantile(Mean_Columella, 0.75) + 1.5 * IQR(Mean_Columella)
+  )
+
+# Before removing outliers
+ggplot(Columella_without_Na, aes(x = factor(Polyp_Number), y = Mean_Columella)) +
+  geom_boxplot() +
+  ggtitle("Before removing outliers")
+
+# After removing outliers
+ggplot(Columella_outlier, aes(x = factor(Polyp_Number), y = Mean_Columella)) +
+  geom_boxplot() +
+  ggtitle("After removing outliers")
+
+```
+```{r}
+############## SECTION WITH THE MEAN DATA AND NOT ALL POINTS ###########################
+#vizualisation of the data via graph
+#CORALLITE
+hist(Corallite_outlier$Mean_Corallite,
+     main = "Histogram of the mean of corallite Diameter",
+     xlab = "Mean corallite",
+     breaks = 15)
+
+#PRIMARY SEPTA
+hist(Psepta_outlier$Mean_Primary_septa,
+     main = "Histogram of the mean of primary septa",
+     xlab = "Mean of primary septa",
+     breaks = 15)
+
+#Secondary SEPTA
+hist(Ssepta_outlier$Mean_Secondary_septa,
+     main = "Histogram of Secondary septa",
+     xlab = "Mean of secondary septa",
+     breaks = 15)
+
+#tertiary septa
+hist(Tsepta_outlier$Mean_Tertiary_septa,
+     main = "Histogram of Tertiary septa",
+     xlab = "Mean of tertiary septa",
+     breaks = 15)
+
+#COLUMELLA 
+hist(Columella_outlier$Mean_Columella,
+     main = "Histogram of the mean of Columella",
+     xlab = "Mean ofcolumella",
+     breaks = 15)
+
+#Q-Q plot 
+#CORALLITE
+qqnorm(Corallite_outlier$Mean_Corallite)
+qqline(Corallite_outlier$Mean_Corallite, col = "red")
+
+#Primary septa
+qqnorm(Psepta_outlier$Mean_Primary_septa)
+qqline(Psepta_outlier$Mean_Primary_septa, col = "red")
+
+#secondary septa 
+qqnorm(Ssepta_outlier$Mean_Secondary_septa)
+qqline(Ssepta_outlier$Mean_Secondary_septa, col = "red")
+
+#Tertiary septa 
+qqnorm(Tsepta_outlier$Mean_Tertiary_septa)
+qqline(Tsepta_outlier$Mean_Tertiary_septa, col = "red")
+
+#Tertiary septa 
+qqnorm(Columella_outlier$Mean_Columella)
+qqline(Columella_outlier$Mean_Columella, col = "red")
+
+#statistic part
+#normality on coralitte diameter µm 
+shapiro.test(residuals(aov(Mean_Corallite ~ Polyp_number, data = Corallite_outlier)))
+#normality validated
+#normality on primary septa witdh µm
+shapiro.test(residuals(aov(Mean_Primary_septa ~ Polyp_number, data = Psepta_outlier)))
+#normality validated
+#normality on secondary septa witdh µm
+shapiro.test(residuals(aov(Mean_Secondary_septa ~ Polyp_number, data = Ssepta_outlier)))
+#normality validated
+#normality on tertiary septa witdh µm
+shapiro.test(residuals(aov(Mean_Tertiary_septa ~ Polyp_number, data = Tsepta_outlier)))
+#do not follow the normality need to used a Kruskal-Wallis test 
+#normality on columella witdh µm
+shapiro.test(residuals(aov(Mean_Columella ~ Polyp_number, data = Columella_outlier)))
+#normality validated
+
+#ANOVA test
+#CORALLITE ################## We can't compare because only one point per dataset of polyp number #######
+anova_result_coralitte <- aov(Mean_Corallite ~ factor(Polyp_number), data = Corallite_outlier)
+summary(anova_result_coralitte)
+#Post-Hoc comparaison 
+tukey_result_coralitte <- TukeyHSD(anova_result_coralitte)
+tukey_result_coralitte
+
+##################
+
+#PRIMARY septa
+anova_result_primary <- aov(Mean_Primary_septa ~ factor(Polyp_number), data = Psepta_outlier)
+summary(anova_result_primary)
+#Post-Hoc comparaison 
+tukey_result_primary <- TukeyHSD(anova_result_primary)
+tukey_result_primary
+
+anova_result_primary <- aov(Mean_Primary_septa ~ factor(Polyp_number), data = Psepta_outlier)
+summary(anova_result_primary)
+#resume of the anova
+#p-value: 0.00223 
+
+TukeyHSD(anova_result_primary)
+#resume of significant values 
+#3-1   45.30700  16.456371 74.15762898 0.0002840
+#8-1   30.24656   1.395931 59.09718898 0.0339409
+
+##################
+
+#Secondary septa
+anova_result_secondary <- aov(Mean_Secondary_septa ~ factor(Polyp_number), data = Ssepta_outlier)
+summary(anova_result_secondary)
+#Post-Hoc comparaison 
+tukey_result_secondary <- TukeyHSD(anova_result_secondary)
+tukey_result_secondary
+
+anova_result_secondary <- aov(Mean_Secondary_septa ~ factor(Polyp_number), data = Ssepta_outlier)
+summary(anova_result_secondary)
+#resume of the anova
+#p-value: 0.00399 
+
+TukeyHSD(anova_result_secondary)
+#resume of significant values 
+# diff        lwr        upr     p adj
+#3-1   20.8596800   6.450904 35.2684559 0.0010216
+#5-3  -15.1949200 -29.603696 -0.7861441 0.0324880
+#6-3  -15.0961200 -29.504896 -0.6873441 0.0343286
+
+##################
+
+#Tertiary septa
+anova_result_tertiary <- aov(Mean_Tertiary_septa ~ factor(Polyp_number), data = Tsepta_outlier)
+summary(anova_result_tertiary)
+#Post-Hoc comparaison 
+tukey_result_tertiary <- TukeyHSD(anova_result_tertiary)
+tukey_result_tertiary
+
+anova_result_tertiary <- aov(Mean_Tertiary_septa ~ factor(Polyp_number), data = Tsepta_outlier)
+summary(anova_result_tertiary)
+#resume of the anova
+#p-value:0.147   
+
+TukeyHSD(anova_result_tertiary)
+#resume of significant values 
+# diff        lwr        upr     p adj
+#5-3 6.250317 -3.42938 15.93001 0.1474699
+
+################## We can't compare because only one point per dataset of polyp number #######
+#Columella 
+anova_result_columella <- aov(Mean_Columella ~ factor(Polyp_number), data = Columella_outlier)
+summary(anova_result_columella)
+#Post-Hoc comparaison 
+tukey_result_columella <- TukeyHSD(anova_result_columella)
+tukey_result_columella
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ```{r}
 #Define for each number of polyp spat a color different 
@@ -211,201 +677,10 @@ combined_plot <- (p1 | p2) / (p3 | p4) / (p5)
 # Save to file
 ggsave("Output/combined_plot.pdf", combined_plot, width = 12, height = 10)
 
-```
-```{r}
-#created average for Primary secondary tertiary septa, corallite diameters, columella etc 
-# Load your data
-SEM_data <- read.csv("Data/Mineral/SEM_polyp_diameters.csv", stringsAsFactors = FALSE)
-
-# Clean column names (remove spaces and make consistent)
-names(SEM_data) <- trimws(names(SEM_data))
-
-names(SEM_data)
-
-# Calculate averages for Primary_septa grouped by its label column
-avg_primary <- aggregate(SEM_data$Primary_septa,
-                         by = list(SEM_data$Primary_septa_number),
-                         FUN = mean, na.rm = TRUE)
-
-# Rename columns for clarity
-colnames(avg_primary) <- c("Primary_septa_number", "Mean_Primary_septa")
-
-write.csv(avg_primary, "Output/Average_Primary_Septa.csv", row.names = FALSE)
-#doing the same process for the others parameter wanted to have result of 
-avg_secondary <- aggregate(SEM_data$Secondary_septa,
-                         by = list(SEM_data$Secondary_septa_number),
-                         FUN = mean, na.rm = TRUE)
-
-colnames(avg_secondary) <- c("Secondary_septa_number", "Mean_Secondary_septa")
-write.csv(avg_secondary, "Output/Average_Secondary_Septa.csv", row.names = FALSE)
-
-
-avg_tertiary <- aggregate(SEM_data$Tertiary_septa,
-                         by = list(SEM_data$Tertiary_septa_number),
-                         FUN = mean, na.rm = TRUE)
-
-colnames(avg_tertiary) <- c("Tertiary_septa_number", "Mean_Tertiary_septa")
-write.csv(avg_tertiary, "Output/Average_Tertiary_Septa.csv", row.names = FALSE)
-
-
-avg_corallite <- aggregate(SEM_data$Corallite_Diameter,
-                         by = list(SEM_data$Polyp_number),
-                         FUN = mean, na.rm = TRUE)
-
-colnames(avg_corallite) <- c("Corallite_number", "Mean_Corallite")
-write.csv(avg_corallite, "Output/Average_Corallite.csv", row.names = FALSE)
-
-
-avg_columella <- aggregate(SEM_data$Columella,
-                         by = list(SEM_data$Polyp_number),
-                         FUN = mean, na.rm = TRUE)
-
-colnames(avg_columella) <- c("Columella_number", "Mean_Columella")
-write.csv(avg_columella, "Output/Average_Columella.csv", row.names = FALSE)
-
-#merging all the tables in one dataset 
-# --- Standardize the grouping column name so all can merge ---
-names(avg_primary)[1]   <- "Polyp_ID"
-names(avg_secondary)[1] <- "Polyp_ID"
-names(avg_tertiary)[1]  <- "Polyp_ID"
-names(avg_corallite)[1] <- "Polyp_ID"
-names(avg_columella)[1] <- "Polyp_ID"
-
-# --- Merge all average tables into one dataset ---
-merged_SEM <- Reduce(function(x, y) merge(x, y, by = "Polyp_ID", all = TRUE),
-                     list(avg_primary, avg_secondary, avg_tertiary, avg_corallite, avg_columella))
-
-write.csv(merged_SEM, "Output/merged_SEM_data.csv", row.names = FALSE)
-
-#merge the data with the polyp_number 
 
 ```
 
-```{r}
-#plot the result 
-#ploting the coralite diameters with boxplot. AVERAGE of all of them with only few points 
-merged_SEM$Polyp_ID <- as.numeric(as.character(merged_SEM$Polyp_number))
 
-# Create individual plots
-Mean_Primary <- ggplot(merged_SEM, aes(x = Polyp_number, y = Mean_Primary_septa)) +
-  geom_point(color = "steelblue", size = 2) +
-  geom_line(color = "steelblue") +
-  theme_minimal() +
-  labs(title = "Mean Primary Septa across Polyps", x = "Polyp ID", y = "Mean Primary Septa")
-``` 
-
-
-
-```{r}
-#let take a look to the assemtpion of the data 
-#create separe file for each variable in the dataset
-
-#CORALLITE
-Corallite <- sem_clean_data[, c("Polyp_number", "Corallite_Diameter")]
-Corallite_without_Na <- na.omit(Corallite)
-
-#removing outlier 
-Corallite_outlier <- Corallite_without_Na %>%
-  filter(
-    Corallite_Diameter >= quantile(Corallite_Diameter, 0.25) - 1.5 * IQR(Corallite_Diameter),
-    Corallite_Diameter <= quantile(Corallite_Diameter, 0.75) + 1.5 * IQR(Corallite_Diameter)
-  )
-
-# Before removing outliers
-ggplot(Corallite_without_Na, aes(x = factor(Polyp_number), y = Corallite_Diameter)) +
-  geom_boxplot() +
-  ggtitle("Before removing outliers")
-
-# After removing outliers
-ggplot(Corallite_outlier, aes(x = factor(Polyp_number), y = Corallite_Diameter)) +
-  geom_boxplot() +
-  ggtitle("After removing outliers")
-
-#PRIMARY SEPTA
-Psepta <- sem_clean_data[, c("Polyp_number", "Primary_septa")]
-Psepta_without_Na <- na.omit(Psepta)
-
-#removing outlier 
-Psepta_outlier <- Psepta_without_Na %>%
-  filter(
-    Primary_septa >= quantile(Primary_septa, 0.25) - 1.5 * IQR(Primary_septa),
-    Primary_septa <= quantile(Primary_septa, 0.75) + 1.5 * IQR(Primary_septa)
-  )
-
-# Before removing outliers
-ggplot(Psepta_without_Na, aes(x = factor(Polyp_number), y = Primary_septa)) +
-  geom_boxplot() +
-  ggtitle("Before removing outliers")
-
-# After removing outliers
-ggplot(Psepta_outlier, aes(x = factor(Polyp_number), y = Primary_septa)) +
-  geom_boxplot() +
-  ggtitle("After removing outliers")
-
-#SECONDARY SEPTA
-Ssepta <- sem_clean_data[, c("Polyp_number", "Secondary_septa")]
-Ssepta_without_Na <- na.omit(Ssepta)
-
-#removing outlier 
-Ssepta_outlier <- Ssepta_without_Na %>%
-  filter(
-    Secondary_septa >= quantile(Secondary_septa, 0.25) - 1.5 * IQR(Secondary_septa),
-    Secondary_septa <= quantile(Secondary_septa, 0.75) + 1.5 * IQR(Secondary_septa)
-  )
-
-# Before removing outliers
-ggplot(Ssepta_without_Na, aes(x = factor(Polyp_number), y = Secondary_septa)) +
-  geom_boxplot() +
-  ggtitle("Before removing outliers")
-
-# After removing outliers
-ggplot(Ssepta_outlier, aes(x = factor(Polyp_number), y = Secondary_septa)) +
-  geom_boxplot() +
-  ggtitle("After removing outliers")
-
-#TERTIARY SEPTA
-Tsepta <- sem_clean_data[, c("Polyp_number", "Tertiary_septa")]
-Tsepta_without_Na <- na.omit(Tsepta)
-
-#removing outlier 
-Tsepta_outlier <- Tsepta_without_Na %>%
-  filter(
-    Tertiary_septa >= quantile(Tertiary_septa, 0.25) - 1.5 * IQR(Tertiary_septa),
-    Tertiary_septa <= quantile(Tertiary_septa, 0.75) + 1.5 * IQR(Tertiary_septa)
-  )
-
-# Before removing outliers
-ggplot(Tsepta_without_Na, aes(x = factor(Polyp_number), y = Tertiary_septa)) +
-  geom_boxplot() +
-  ggtitle("Before removing outliers")
-
-# After removing outliers
-ggplot(Tsepta_outlier, aes(x = factor(Polyp_number), y = Tertiary_septa)) +
-  geom_boxplot() +
-  ggtitle("After removing outliers")
-
-#COLUMELLA SEPTA
-Columella <- sem_clean_data[, c("Polyp_number", "Columella")]
-Columella_without_Na <- na.omit(Columella)
-
-#removing outlier 
-Columella_outlier <- Columella_without_Na %>%
-  filter(
-    Columella >= quantile(Columella, 0.25) - 1.5 * IQR(Columella),
-    Columella <= quantile(Columella, 0.75) + 1.5 * IQR(Columella)
-  )
-
-# Before removing outliers
-ggplot(Columella_without_Na, aes(x = factor(Polyp_number), y = Columella)) +
-  geom_boxplot() +
-  ggtitle("Before removing outliers")
-
-# After removing outliers
-ggplot(Columella_outlier, aes(x = factor(Polyp_number), y = Columella)) +
-  geom_boxplot() +
-  ggtitle("After removing outliers")
-
-```
 ```{r}
 Coralite_diameters_clean <- ggplot(Corallite_outlier, aes(x = factor(Polyp_number),
                   y = Corallite_Diameter,
@@ -552,6 +827,8 @@ combined_plot_without_outlier <- (P1 | P2) / (P3 | P4) / (P5)
 ggsave("Output/combined_plot_without_outlier.pdf", combined_plot_without_outlier, width = 12, height = 10)
 
 ```
+
+
 ```{r}
 #vizualisation of the data via graph
 #CORALLITE
