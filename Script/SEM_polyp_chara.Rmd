@@ -121,21 +121,34 @@ merged_SEM_data_polyp$Polyp_Number <- as.numeric(as.character(merged_SEM_data_po
 head(merged_SEM_data_polyp)
 colnames(merged_SEM_data_polyp)
 
-#creation of a file with only the 9 first raw of the dataset with the Corallite and Columella diameters
+#creation of a file with only the 9 first raw of the dataset with the Corallite and Columella mean diameters
 # Keep only the first 9 rows
 Corallite_columella_merge <- merged_SEM_data_polyp[1:9, ]
 
-# Save to a new CSV file
-write.csv(Corallite_columella_merge, "Corallite_columella_merge.csv", row.names = FALSE)
 
-#remove column Polyp_number to the dataset
+#remove column Polyp_number to the dataset (mean)
 Corallite_columella_merge <- Corallite_columella_merge[ , !(names(Corallite_columella_merge) %in% "Polyp_Number")]
 
-#rename the column Polyp_ID to Polyp_Number 
+#rename the column Polyp_ID to Polyp_Number (mean)
 Corallite_columella_merge <- Corallite_columella_merge %>%
   rename(
     Polyp_Number = Polyp_ID
   )
+
+# Save to a new CSV file
+write.csv(Corallite_columella_merge, "Corallite_columella_merge.csv", row.names = FALSE)
+
+#create file with all the datapoints of corallite and columella measurement and not the mean 
+Corallite_Columella_point <- SEM_data [,c("Polyp_number","Corallite_Diameter","Columella")]
+
+#removing NA in the data set of Corallite_Columella_point for after select only 3 values
+Corallite_Columella_point_clean <- na.omit(Corallite_Columella_point)
+
+#downsample 3 points for each measurment of Corallite and Columella 
+Corallite_Columella_point_select <- Corallite_Columella_point_clean %>%
+  group_by(Polyp_number) %>%                   # group by Polyp_Number
+  slice_sample(n = min(3), replace = FALSE) %>%  # take 3 rows or all if <3
+  ungroup()
 
 ####starting to plot the data 
 #PRIMARY
@@ -167,18 +180,20 @@ avg_tertiary <- ggplot(merged_SEM_data_polyp, aes(x = factor(Polyp_Number), y = 
 
 ggsave("Output/avg_tertiary.png", plot = avg_tertiary, width = 10, height = 5, dpi = 400)
 
-avg_columella <- ggplot(Corallite_columella_merge, aes(x = factor(Polyp_Number), y = Mean_Columella)) +
+avg_columella <- ggplot(Corallite_Columella_point_select, aes(x = factor(Polyp_number), y = Columella)) +
+  geom_boxplot(outlier.shape = NA, fill = "darkslategray3", width = 0.5, alpha = 0.5) +  
   geom_jitter(width = 0.2, color = "black", size = 1, alpha = 0.5) +  
-  labs(x = "Polyp number", y = "Mean columella diameter (µm)") +
+  labs(x = "Polyp number", y = "Columella diameter (µm)") +
   theme_minimal()
 
 ggsave("Output/avg_columella.png", plot = avg_columella, width = 10, height = 5, dpi = 400)
 
 
-avg_corallite <- ggplot(Corallite_columella_merge, aes(x = factor(Polyp_Number), y = Mean_Corallite)) +
+avg_corallite <- ggplot(Corallite_Columella_point_select, aes(x = factor(Polyp_number), y = Corallite_Diameter)) +
+  geom_boxplot(outlier.shape = NA, fill = "darkslategray3", width = 0.5, alpha = 0.5) +
   geom_jitter(width = 0.2, color = "black", size = 1, alpha = 0.5) +
   labs(
-    x = "Polyp number", y = "Mean corallite diameter (µm)") +
+    x = "Polyp number", y = "Corallite diameter (µm)") +
   theme_minimal()
 
 ggsave("Output/avg_corallite.png", plot = avg_corallite, width = 10, height = 5, dpi = 400)
@@ -211,13 +226,14 @@ avg_combined_plot <- (avg1 | avg2) / (avg3 | avg4) / (avg5)+
 ggsave("Output/avg_combined_plot.pdf", avg_combined_plot, width = 12, height = 10)
 
 ``` 
+
 ```{r}
 ############## SECTION WITH THE MEAN DATA AND NOT ALL POINTS ###########################
 #let take a look to the assemtpion of the data 
 #create separe file for each variable in the dataset
 
 #CORALLITE
-Corallite <- merged_SEM_data_polyp[, c("Polyp_Number", "Mean_Corallite")]
+Corallite <- Corallite_columella_merge[, c("Polyp_Number", "Mean_Corallite")]
 Corallite_without_Na <- na.omit(Corallite)
 
 #removing outlier 
@@ -238,7 +254,7 @@ ggplot(Corallite_outlier, aes(x = factor(Polyp_Number), y = Mean_Corallite)) +
   ggtitle("After removing outliers")
 
 #PRIMARY SEPTA
-Psepta <- merged_SEM_data_polyp[, c("Polyp_number", "Mean_Primary_septa")]
+Psepta <- merged_SEM_data_polyp[, c("Polyp_Number", "Mean_Primary_septa")]
 Psepta_without_Na <- na.omit(Psepta)
 
 #removing outlier 
@@ -259,7 +275,7 @@ ggplot(Psepta_outlier, aes(x = factor(Polyp_Number), y = Mean_Primary_septa)) +
   ggtitle("After removing outliers")
 
 #SECONDARY SEPTA
-Ssepta <- merged_SEM_data_polyp[, c("Polyp_number", "Mean_Secondary_septa")]
+Ssepta <- merged_SEM_data_polyp[, c("Polyp_Number", "Mean_Secondary_septa")]
 Ssepta_without_Na <- na.omit(Ssepta)
 
 #removing outlier 
@@ -280,7 +296,7 @@ ggplot(Ssepta_outlier, aes(x = factor(Polyp_Number), y = Mean_Secondary_septa)) 
   ggtitle("After removing outliers")
 
 #TERTIARY SEPTA
-Tsepta <- merged_SEM_data_polyp[, c("Polyp_number", "Mean_Tertiary_septa")]
+Tsepta <- merged_SEM_data_polyp[, c("Polyp_Number", "Mean_Tertiary_septa")]
 Tsepta_without_Na <- na.omit(Tsepta)
 
 #removing outlier 
@@ -301,8 +317,16 @@ ggplot(Tsepta_outlier, aes(x = factor(Polyp_Number), y = Mean_Tertiary_septa)) +
   ggtitle("After removing outliers")
 
 #COLUMELLA SEPTA
-Columella <- merged_SEM_data_polyp[, c("Polyp_number", "Mean_Columella")]
+#COLUMELLA
+Columella <- Corallite_columella_merge[, c("Polyp_Number", "Mean_Columella")]
 Columella_without_Na <- na.omit(Columella)
+
+#removing outlier 
+Columella_outlier <- Columella_without_Na %>%
+  filter(
+    Mean_Columella >= quantile(Mean_Columella, 0.25) - 1.5 * IQR(Mean_Columella),
+    Mean_Columella <= quantile(Mean_Columella, 0.75) + 1.5 * IQR(Mean_Columella)
+  )
 
 #removing outlier 
 Columella_outlier <- Columella_without_Na %>%
@@ -326,9 +350,9 @@ ggplot(Columella_outlier, aes(x = factor(Polyp_Number), y = Mean_Columella)) +
 ############## SECTION WITH THE MEAN DATA AND NOT ALL POINTS ###########################
 #vizualisation of the data via graph
 #CORALLITE
-hist(Corallite_outlier$Mean_Corallite,
-     main = "Histogram of the mean of corallite Diameter",
-     xlab = "Mean corallite",
+hist(Corallite_Columella_point_select$Corallite_Diameter,
+     main = "Histogram of the corallite Diameter",
+     xlab = "corallite",
      breaks = 15)
 
 #PRIMARY SEPTA
@@ -350,15 +374,15 @@ hist(Tsepta_outlier$Mean_Tertiary_septa,
      breaks = 15)
 
 #COLUMELLA 
-hist(Columella_outlier$Mean_Columella,
-     main = "Histogram of the mean of Columella",
-     xlab = "Mean ofcolumella",
+hist(Corallite_Columella_point_select$Columella,
+     main = "Histogram of the Columella",
+     xlab = "Columella",
      breaks = 15)
 
 #Q-Q plot 
 #CORALLITE
-qqnorm(Corallite_outlier$Mean_Corallite)
-qqline(Corallite_outlier$Mean_Corallite, col = "red")
+qqnorm(Corallite_Columella_point_select$Corallite_Diameter)
+qqline(Corallite_Columella_point_select$Corallite_Diameter, col = "red")
 
 #Primary septa
 qqnorm(Psepta_outlier$Mean_Primary_septa)
@@ -373,44 +397,47 @@ qqnorm(Tsepta_outlier$Mean_Tertiary_septa)
 qqline(Tsepta_outlier$Mean_Tertiary_septa, col = "red")
 
 #Tertiary septa 
-qqnorm(Columella_outlier$Mean_Columella)
-qqline(Columella_outlier$Mean_Columella, col = "red")
+qqnorm(Corallite_Columella_point_select$Columella)
+qqline(Corallite_Columella_point_select$Columella, col = "red")
 
 #statistic part
 #normality on coralitte diameter µm 
-shapiro.test(residuals(aov(Mean_Corallite ~ Polyp_number, data = Corallite_outlier)))
+shapiro.test(residuals(aov(Corallite_Diameter ~ Polyp_number, data = Corallite_Columella_point_select)))
 #normality validated
 #normality on primary septa witdh µm
-shapiro.test(residuals(aov(Mean_Primary_septa ~ Polyp_number, data = Psepta_outlier)))
+shapiro.test(residuals(aov(Mean_Primary_septa ~ Polyp_Number, data = Psepta_outlier)))
 #normality validated
 #normality on secondary septa witdh µm
-shapiro.test(residuals(aov(Mean_Secondary_septa ~ Polyp_number, data = Ssepta_outlier)))
+shapiro.test(residuals(aov(Mean_Secondary_septa ~ Polyp_Number, data = Ssepta_outlier)))
 #normality validated
 #normality on tertiary septa witdh µm
-shapiro.test(residuals(aov(Mean_Tertiary_septa ~ Polyp_number, data = Tsepta_outlier)))
+shapiro.test(residuals(aov(Mean_Tertiary_septa ~ Polyp_Number, data = Tsepta_outlier)))
 #do not follow the normality need to used a Kruskal-Wallis test 
 #normality on columella witdh µm
-shapiro.test(residuals(aov(Mean_Columella ~ Polyp_number, data = Columella_outlier)))
+shapiro.test(residuals(aov(Columella ~ Polyp_number, data = Corallite_Columella_point_select)))
 #normality validated
 
 #ANOVA test
-#CORALLITE ################## We can't compare because only one point per dataset of polyp number #######
-anova_result_coralitte <- aov(Mean_Corallite ~ factor(Polyp_number), data = Corallite_outlier)
+#CORALLITE 
+anova_result_coralitte <- aov(Corallite_Diameter ~ factor(Polyp_number), data = Corallite_Columella_point_select)
 summary(anova_result_coralitte)
+#resume of the anova
+#p-value: 6.32e-09 ***
 #Post-Hoc comparaison 
 tukey_result_coralitte <- TukeyHSD(anova_result_coralitte)
 tukey_result_coralitte
 
+
 ##################
 
 #PRIMARY septa
-anova_result_primary <- aov(Mean_Primary_septa ~ factor(Polyp_number), data = Psepta_outlier)
+anova_result_primary <- aov(Mean_Primary_septa ~ factor(Polyp_Number), data = Psepta_outlier)
 summary(anova_result_primary)
 #Post-Hoc comparaison 
 tukey_result_primary <- TukeyHSD(anova_result_primary)
 tukey_result_primary
 
-anova_result_primary <- aov(Mean_Primary_septa ~ factor(Polyp_number), data = Psepta_outlier)
+anova_result_primary <- aov(Mean_Primary_septa ~ factor(Polyp_Number), data = Psepta_outlier)
 summary(anova_result_primary)
 #resume of the anova
 #p-value: 0.00223 
@@ -423,13 +450,13 @@ TukeyHSD(anova_result_primary)
 ##################
 
 #Secondary septa
-anova_result_secondary <- aov(Mean_Secondary_septa ~ factor(Polyp_number), data = Ssepta_outlier)
+anova_result_secondary <- aov(Mean_Secondary_septa ~ factor(Polyp_Number), data = Ssepta_outlier)
 summary(anova_result_secondary)
 #Post-Hoc comparaison 
 tukey_result_secondary <- TukeyHSD(anova_result_secondary)
 tukey_result_secondary
 
-anova_result_secondary <- aov(Mean_Secondary_septa ~ factor(Polyp_number), data = Ssepta_outlier)
+anova_result_secondary <- aov(Mean_Secondary_septa ~ factor(Polyp_Number), data = Ssepta_outlier)
 summary(anova_result_secondary)
 #resume of the anova
 #p-value: 0.00399 
@@ -444,13 +471,13 @@ TukeyHSD(anova_result_secondary)
 ##################
 
 #Tertiary septa
-anova_result_tertiary <- aov(Mean_Tertiary_septa ~ factor(Polyp_number), data = Tsepta_outlier)
+anova_result_tertiary <- aov(Mean_Tertiary_septa ~ factor(Polyp_Number), data = Tsepta_outlier)
 summary(anova_result_tertiary)
 #Post-Hoc comparaison 
 tukey_result_tertiary <- TukeyHSD(anova_result_tertiary)
 tukey_result_tertiary
 
-anova_result_tertiary <- aov(Mean_Tertiary_septa ~ factor(Polyp_number), data = Tsepta_outlier)
+anova_result_tertiary <- aov(Mean_Tertiary_septa ~ factor(Polyp_Number), data = Tsepta_outlier)
 summary(anova_result_tertiary)
 #resume of the anova
 #p-value:0.147   
@@ -460,9 +487,8 @@ TukeyHSD(anova_result_tertiary)
 # diff        lwr        upr     p adj
 #5-3 6.250317 -3.42938 15.93001 0.1474699
 
-################## We can't compare because only one point per dataset of polyp number #######
 #Columella 
-anova_result_columella <- aov(Mean_Columella ~ factor(Polyp_number), data = Columella_outlier)
+anova_result_columella <- aov(Columella ~ factor(Polyp_number), data = Corallite_Columella_point_select)
 summary(anova_result_columella)
 #Post-Hoc comparaison 
 tukey_result_columella <- TukeyHSD(anova_result_columella)
@@ -470,6 +496,353 @@ tukey_result_columella
 
 
 ```
+```{r}
+#adding the tukey result direclty to the grah to see the letters comparaison between group on plots
+#Corallite
+tukey_letters_corallite <- multcompLetters4(anova_result_coralitte, tukey_result_coralitte)
+
+# Convert to a data frame for easy plotting
+letters_corallite <- as.data.frame.list(tukey_letters_corallite$`factor(Polyp_number)`)
+letters_corallite$Polyp_number <- rownames(letters_corallite)
+colnames(letters_corallite) <- c("Letters", "Polyp_number")
+
+#remove column Polyp_number to the dataset
+letters_corallite <- letters_corallite[ , !(names(letters_corallite) %in% "Polyp_number")]
+
+#rename the column NA.2 to Polyp_Number 
+names(letters_corallite)[names(letters_corallite) == "NA.5"] <- "Polyp_number"
+
+# Make sure Polyp_Number matches your ggplot factor type
+letters_corallite$Polyp_number <- as.factor(letters_corallite$Polyp_number)
+
+#remove column 2,3,4,5,6 in the dataset letters_corallite 
+letters_corallite <- letters_corallite[, -c(2,3,4,5,6)]
+
+#COLUMELLA
+tukey_letters_columella <- multcompLetters4(anova_result_columella, tukey_result_columella)
+
+# Convert to a data frame for easy plotting
+letters_columella <- as.data.frame.list(tukey_letters_columella$`factor(Polyp_number)`)
+letters_columella$Polyp_number <- rownames(letters_columella)
+colnames(letters_columella) <- c("Letters", "Polyp_number")
+
+#remove column Polyp_number to the dataset
+letters_columella <- letters_columella[ , !(names(letters_columella) %in% "Polyp_number")]
+
+#rename the column NA.2 to Polyp_Number 
+names(letters_columella)[names(letters_columella) == "NA.3"] <- "Polyp_number"
+
+# Make sure Polyp_Number matches your ggplot factor type
+letters_columella$Polyp_number <- as.factor(letters_columella$Polyp_number)
+
+#remove column 2,3,4 in the dataset letters_corallite 
+letters_columella <- letters_columella[, -c(2,3,4)]
+
+#Primary septa
+#summarize group difference into letters 
+tukey_letters_primary <- multcompLetters4(anova_result_primary, tukey_result_primary)
+
+# Convert to a data frame for easy plotting
+letters_primary <- as.data.frame.list(tukey_letters_primary$`factor(Polyp_Number)`)
+letters_primary$Polyp_Number <- rownames(letters_primary)
+colnames(letters_primary) <- c("Letters", "Polyp_Number")
+
+#remove column Polyp_number to the dataset
+letters_primary <- letters_primary[ , !(names(letters_primary) %in% "Polyp_Number")]
+
+#rename the column NA.2 to Polyp_Number 
+names(letters_primary)[names(letters_primary) == "NA.2"] <- "Polyp_Number"
+
+# Make sure Polyp_Number matches your ggplot factor type
+letters_primary$Polyp_Number <- as.factor(letters_primary$Polyp_Number)
+
+#Secondary septa
+#summarize group difference into letters 
+tukey_letters_secondary <- multcompLetters4(anova_result_secondary, tukey_result_secondary)
+
+# Convert to a data frame for easy plotting
+letters_secondary <- as.data.frame.list(tukey_letters_secondary$`factor(Polyp_Number)`)
+letters_secondary$Polyp_Number <- rownames(letters_secondary)
+colnames(letters_primary) <- c("Letters", "Polyp_Number")
+
+# Make sure Polyp_Number matches your ggplot factor type
+letters_secondary$Polyp_Number <- as.factor(letters_secondary$Polyp_Number)
+
+#tertiary septa
+#summarize group difference into letters 
+tukey_letters_tertiary <- multcompLetters4(anova_result_tertiary, tukey_result_tertiary)
+
+# Convert to a data frame for easy plotting
+letters_tertiary <- as.data.frame.list(tukey_letters_tertiary$`factor(Polyp_Number)`)
+letters_tertiary$Polyp_Number <- rownames(letters_tertiary)
+colnames(letters_tertiary) <- c("Letters", "Polyp_Number")
+
+# Make sure Polyp_Number matches your ggplot factor type
+letters_tertiary$Polyp_Number <- as.factor(letters_tertiary$Polyp_Number)
+
+###compute mean and places letters nicely on the plot
+#PRIMARY SEPTA
+#summary_primary <- Psepta_outlier %>%
+ # group_by(Polyp_Number) %>%
+  #summarise(mean = mean(Mean_Primary_septa, na.rm = TRUE))
+
+# Merge letters and means
+#summary_primary <- merge(summary_primary, letters_primary, by = "Polyp_Number")
+
+#SECONDARY SEPTA
+#summary_secondary <- Ssepta_outlier %>%
+ # group_by(Polyp_Number) %>%
+  #summarise(mean = mean(Mean_Secondary_septa, na.rm = TRUE))
+
+# Merge letters and means
+#summary_secondary <- merge(summary_secondary, letters_secondary, by = "Polyp_Number")
+
+#TERTIARY SEPTA
+#summary_tertiary <- Tsepta_outlier %>%
+#  group_by(Polyp_Number) %>%
+#  summarise(mean = mean(Mean_Tertiary_septa, na.rm = TRUE))
+
+# Merge letters and means
+#summary_tertiary <- merge(summary_tertiary, letters_tertiary, by = "Polyp_Number")
+
+##adding the letters to the plot and showing the plot 
+#PRIMARY SEPTA
+#merging to ensure matching factor levels
+#summary_primary <- Psepta_outlier %>%
+#  group_by(Polyp_Number) %>%
+#  summarise(mean = mean(Mean_Primary_septa, na.rm = TRUE))
+
+#PRIMARY SEPTA
+# Merge both
+summary_primary <- merge(Psepta_outlier, letters_primary, by = "Polyp_Number", all.x = TRUE)
+print(summary_primary)
+
+# Ensure columns have the correct types
+# X-axis as factor
+summary_primary$Polyp_Number <- factor(summary_primary$Polyp_Number)          
+# Y-axis numeric
+summary_primary$Mean_primary_septa <- as.numeric(summary_primary$Mean_Primary_septa)  
+# Label as character
+summary_primary$Letters <- as.character(summary_primary$Letters)  
+#remove column 4 and 5 in the dataset summary_primary 
+summary_primary <- summary_primary[, -c(4,5)]
+
+# Compute max value per Polyp_Number to position letters above the boxes
+label_positions <- summary_primary %>%
+  group_by(Polyp_Number) %>%
+  summarise(y_pos = max(Mean_Primary_septa, na.rm = TRUE))
+
+# Merge the letters (if not already)
+label_positions <- merge(label_positions, summary_primary[, c("Polyp_Number", "Letters")], by = "Polyp_Number", all.x = TRUE)
+
+# Plot
+Primary_septa_tukey <- ggplot(summary_primary, aes(x = Polyp_Number, y = Mean_primary_septa)) +
+  geom_boxplot(outlier.shape = NA, fill = "darkslategray3", width = 0.5, alpha = 0.5) +
+  geom_jitter(width = 0.2, size = 1, alpha = 0.5) +
+  geom_text(data = label_positions,
+            aes(x = Polyp_Number, y = y_pos + 2, label = Letters), 
+            fontface = "plain", size = 3, vjust = 0) +
+  labs(x = "Polyp number", y = "Mean primary septa width (µm)") +
+  theme_minimal() +
+  expand_limits(y = max(label_positions$y_pos) + 2) 
+
+ggsave("Output/Primary_septa_tukey.png", plot = Primary_septa_tukey, width = 10, height = 5, dpi = 400)
+
+#SECONDARY SEPTA
+# Merge both
+summary_secondary <- merge(Ssepta_outlier, letters_secondary, by = "Polyp_Number", all.x = TRUE)
+print(summary_secondary)
+
+# Ensure columns have the correct types
+# X-axis as factor
+summary_secondary$Polyp_Number <- factor(summary_secondary$Polyp_Number)          
+# Y-axis numeric
+summary_secondary$Mean_secondary_septa <- as.numeric(summary_secondary$Mean_Secondary_septa)  
+# Label as character
+summary_secondary$Letters <- as.character(summary_secondary$Letters)  
+#remove column 4 and 5 in the dataset summary_primary 
+summary_secondary <- summary_secondary[, -c(4,5)]
+
+# Compute max value per Polyp_Number to position letters above the boxes
+label_positions <- summary_secondary %>%
+  group_by(Polyp_Number) %>%
+  summarise(y_pos = max(Mean_secondary_septa, na.rm = TRUE))
+
+# Merge the letters (if not already)
+label_positions <- merge(label_positions, summary_secondary[, c("Polyp_Number", "Letters")], by = "Polyp_Number", all.x = TRUE)
+
+# Plot
+Secondary_septa_tukey <- ggplot(summary_secondary, aes(x = Polyp_Number, y = Mean_secondary_septa)) +
+  geom_boxplot(outlier.shape = NA, fill = "darkslategray3", width = 0.5, alpha = 0.5) +
+  geom_jitter(width = 0.2, size = 1, alpha = 0.5) +
+  geom_text(data = label_positions,
+            aes(x = Polyp_Number, y = y_pos + 2, label = Letters), 
+            fontface = "plain", size = 3, vjust = 0) +
+  labs(x = "Polyp number", y = "Mean secondary septa width (µm)") +
+  theme_minimal() +
+  expand_limits(y = max(label_positions$y_pos) + 2) 
+
+ggsave("Output/Secondary_septa_tukey.png", plot = Secondary_septa_tukey, width = 10, height = 5, dpi = 400)
+
+#TERTIARY SEPTA
+# Merge both
+summary_tertiary <- merge(Tsepta_outlier, letters_tertiary, by = "Polyp_Number", all.x = TRUE)
+print(summary_tertiary)
+
+# Ensure columns have the correct types
+# X-axis as factor
+summary_tertiary$Polyp_Number <- factor(summary_tertiary$Polyp_Number)          
+# Y-axis numeric
+summary_tertiary$Mean_Tertiary_septa <- as.numeric(summary_tertiary$Mean_Tertiary_septa)  
+# Label as character
+summary_tertiary$Letters <- as.character(summary_tertiary$Letters)  
+#remove column 4 and 5 in the dataset summary_primary 
+summary_tertiary <- summary_tertiary[, -c(4,5)]
+
+# Compute max value per Polyp_Number to position letters above the boxes
+label_positions <- summary_tertiary %>%
+  group_by(Polyp_Number) %>%
+  summarise(y_pos = max(Mean_Tertiary_septa, na.rm = TRUE))
+
+# Merge the letters (if not already)
+label_positions <- merge(label_positions, summary_tertiary[, c("Polyp_Number", "Letters")], by = "Polyp_Number", all.x = TRUE)
+
+# Plot
+Tertiary_septa_tukey <- ggplot(summary_tertiary, aes(x = Polyp_Number, y = Mean_Tertiary_septa)) +
+  geom_boxplot(outlier.shape = NA, fill = "darkslategray3", width = 0.5, alpha = 0.5) +
+  geom_jitter(width = 0.2, size = 1, alpha = 0.5) +
+  geom_text(data = label_positions,
+            aes(x = Polyp_Number, y = y_pos + 2, label = Letters), 
+            fontface = "plain", size = 4, vjust = 0) +
+  labs(x = "Polyp number", y = "Mean tertiary septa width (µm)") +
+  theme_minimal() +
+  expand_limits(y = max(label_positions$y_pos) + 2) 
+
+ggsave("Output/Tertiary_septa_tukey.png", plot = Tertiary_septa_tukey, width = 10, height = 5, dpi = 400)
+
+##CORALLITE 
+#ploting Corallite diameter with the data point and not the mean of it 
+# Merge both
+Corallite_Columella_point_plot <- merge(Corallite_Columella_point_select, letters_corallite, by = "Polyp_number", all.x = TRUE)
+print(Corallite_Columella_point_plot)
+
+# Ensure columns have the correct types
+# X-axis as factor
+Corallite_Columella_point_plot$Polyp_number <- factor(Corallite_Columella_point_plot$Polyp_number)          
+# Y-axis numeric
+Corallite_Columella_point_plot$Corallite_Diameter <- as.numeric(Corallite_Columella_point_plot$Corallite_Diameter)  
+# Label as character
+Corallite_Columella_point_plot$Letters <- as.character(Corallite_Columella_point_plot$Letters)  
+
+# Compute max value per Polyp_Number to position letters above the boxes
+label_positions <- Corallite_Columella_point_plot %>%
+  group_by(Polyp_number) %>%
+  summarise(y_pos = max(Corallite_Diameter, na.rm = TRUE))
+
+# Merge the letters (if not already)
+label_positions <- merge(label_positions, Corallite_Columella_point_plot[, c("Polyp_number", "Letters")], by = "Polyp_number", all.x = TRUE)
+
+#corallite
+Corallite_plot <- ggplot(Corallite_Columella_point_select, aes(x = factor(Polyp_number), y = Corallite_Diameter))+
+  geom_boxplot(outlier.shape = NA, fill = "darkslategray3", width = 0.5, alpha = 0.5) +  
+  geom_jitter(width = 0.5, color = "black", size = 1, alpha = 0.5) + 
+  geom_text(data = label_positions,
+            aes(x = Polyp_number, y = y_pos + 2, label = Letters), 
+            fontface = "plain", size = 4, vjust = 0) +
+  labs(x = "Polyp number", y = "Corallite diameter (µm)") +
+  theme_minimal()+
+  expand_limits(y = max(label_positions$y_pos) + 2) 
+
+ggsave("Output/Corallite_plot.png", plot = Corallite_plot, width = 10, height = 5, dpi = 400)
+
+#columella
+#ploting Corallite diameter with the data point and not the mean of it 
+# Merge both
+Corallite_Columella_point_plot <- merge(Corallite_Columella_point_select, letters_columella, by = "Polyp_number", all.x = TRUE)
+print(Corallite_Columella_point_plot)
+
+# Ensure columns have the correct types
+# X-axis as factor
+Corallite_Columella_point_plot$Polyp_number <- factor(Corallite_Columella_point_plot$Polyp_number)          
+# Y-axis numeric
+Corallite_Columella_point_plot$Columella <- as.numeric(Corallite_Columella_point_plot$Columella)  
+# Label as character
+Corallite_Columella_point_plot$Letters <- as.character(Corallite_Columella_point_plot$Letters)  
+
+# Compute max value per Polyp_Number to position letters above the boxes
+label_positions <- Corallite_Columella_point_plot %>%
+  group_by(Polyp_number) %>%
+  summarise(y_pos = max(Columella, na.rm = TRUE))
+
+# Merge the letters (if not already)
+label_positions <- merge(label_positions, Corallite_Columella_point_plot[, c("Polyp_number", "Letters")], by = "Polyp_number", all.x = TRUE)
+
+Columella_plot <- ggplot(Corallite_Columella_point_select, aes(x = factor(Polyp_number), y = Columella))+
+  geom_boxplot(outlier.shape = NA, fill = "darkslategray3", width = 0.5, alpha = 0.5) +  
+  geom_jitter(width = 0.5, color = "black", size = 1, alpha = 0.5) + 
+  labs(x = "Polyp number", y = "Columella diameter (µm)") +
+  geom_text(data = label_positions,
+            aes(x = Polyp_number, y = y_pos + 2, label = Letters), 
+            fontface = "plain", size = 4, vjust = 0) +
+  labs(x = "Polyp number", y = "Columella diameter (µm)") +
+  theme_minimal()+
+  expand_limits(y = max(label_positions$y_pos) + 2) 
+
+
+ggsave("Output/Columella_plot.png", plot = Columella_plot, width = 10, height = 5, dpi = 400)
+
+#Merging all the graph together 
+avg1 <- Corallite_plot + theme(legend.position = "bottom",           
+    legend.title.align = 0.5,             
+    legend.box = "horizontal") 
+
+avg2 <- Primary_septa_tukey + theme(legend.position = "bottom",           
+    legend.title.align = 0.5,             
+    legend.box = "horizontal") 
+
+avg3 <- Secondary_septa_tukey + theme(legend.position = "bottom",           
+    legend.title.align = 0.5,             
+    legend.box = "horizontal") 
+avg4 <- Tertiary_septa_tukey + theme(legend.position = "bottom",           
+    legend.title.align = 0.5,             
+    legend.box = "horizontal") 
+
+avg5 <- Columella_plot + theme(legend.position = "bottom",           
+    legend.title.align = 0.5,             
+    legend.box = "horizontal") 
+
+# Combine plots
+avg_combined_plot_tukey <- (avg1 | avg2) / (avg3 | avg4) / (avg5)+
+  plot_annotation(tag_levels = 'A')
+
+# Save to file
+ggsave("Output/avg_combined_plot_tukey.pdf", avg_combined_plot_tukey, width = 12, height = 10)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -625,7 +998,7 @@ tertiary_septa <- ggplot(sem_clean_data, aes(x = factor(Polyp_number),
 ggsave("Output/tertiary_septa.png", plot = tertiary_septa, width = 10, height = 5, dpi = 600)
 
 #ploting the columella with boxplot and point repartition 
-columella <- ggplot(sem_clean_data, aes(x = factor(Polyp_number),
+columella <- ggplot(Corallite_Columella_point_select, aes(x = factor(Polyp_number),
                   y = Columella,
                   fill = factor(Polyp_number),
                   color = factor(Polyp_number))) +
@@ -679,7 +1052,6 @@ ggsave("Output/combined_plot.pdf", combined_plot, width = 12, height = 10)
 
 
 ```
-
 
 ```{r}
 Coralite_diameters_clean <- ggplot(Corallite_outlier, aes(x = factor(Polyp_number),
