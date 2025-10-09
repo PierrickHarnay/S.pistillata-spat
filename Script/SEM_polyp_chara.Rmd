@@ -509,7 +509,7 @@ colnames(letters_corallite) <- c("Letters", "Polyp_number")
 #remove column Polyp_number to the dataset
 letters_corallite <- letters_corallite[ , !(names(letters_corallite) %in% "Polyp_number")]
 
-#rename the column NA.2 to Polyp_Number 
+#rename the column NA.5 to Polyp_Number 
 names(letters_corallite)[names(letters_corallite) == "NA.5"] <- "Polyp_number"
 
 # Make sure Polyp_Number matches your ggplot factor type
@@ -529,14 +529,14 @@ colnames(letters_columella) <- c("Letters", "Polyp_number")
 #remove column Polyp_number to the dataset
 letters_columella <- letters_columella[ , !(names(letters_columella) %in% "Polyp_number")]
 
-#rename the column NA.2 to Polyp_Number 
+#rename the column NA.3 to Polyp_Number 
 names(letters_columella)[names(letters_columella) == "NA.3"] <- "Polyp_number"
+
+#remove column 2,3,4 in the dataset letters_columella 
+letters_columella <- letters_columella[, -c(2,3,4)]
 
 # Make sure Polyp_Number matches your ggplot factor type
 letters_columella$Polyp_number <- as.factor(letters_columella$Polyp_number)
-
-#remove column 2,3,4 in the dataset letters_corallite 
-letters_columella <- letters_columella[, -c(2,3,4)]
 
 #Primary septa
 #summarize group difference into letters 
@@ -624,8 +624,8 @@ summary_primary$Polyp_Number <- factor(summary_primary$Polyp_Number)
 summary_primary$Mean_primary_septa <- as.numeric(summary_primary$Mean_Primary_septa)  
 # Label as character
 summary_primary$Letters <- as.character(summary_primary$Letters)  
-#remove column 4 and 5 in the dataset summary_primary 
-summary_primary <- summary_primary[, -c(4,5)]
+#remove column 4 and 5, 6 in the dataset summary_primary 
+summary_primary <- summary_primary[, -c(4,5,6)]
 
 # Compute max value per Polyp_Number to position letters above the boxes
 label_positions <- summary_primary %>%
@@ -636,12 +636,12 @@ label_positions <- summary_primary %>%
 label_positions <- merge(label_positions, summary_primary[, c("Polyp_Number", "Letters")], by = "Polyp_Number", all.x = TRUE)
 
 # Plot
-Primary_septa_tukey <- ggplot(summary_primary, aes(x = Polyp_Number, y = Mean_primary_septa)) +
+Primary_septa_tukey <- ggplot(summary_primary, aes(x = Polyp_Number, y = Mean_Primary_septa)) +
   geom_boxplot(outlier.shape = NA, fill = "darkslategray3", width = 0.5, alpha = 0.5) +
   geom_jitter(width = 0.2, size = 1, alpha = 0.5) +
   geom_text(data = label_positions,
             aes(x = Polyp_Number, y = y_pos + 2, label = Letters), 
-            fontface = "plain", size = 3, vjust = 0) +
+            fontface = "plain", size = 4, vjust = 0) +
   labs(x = "Polyp number", y = "Mean primary septa width (µm)") +
   theme_minimal() +
   expand_limits(y = max(label_positions$y_pos) + 2) 
@@ -677,7 +677,7 @@ Secondary_septa_tukey <- ggplot(summary_secondary, aes(x = Polyp_Number, y = Mea
   geom_jitter(width = 0.2, size = 1, alpha = 0.5) +
   geom_text(data = label_positions,
             aes(x = Polyp_Number, y = y_pos + 2, label = Letters), 
-            fontface = "plain", size = 3, vjust = 0) +
+            fontface = "plain", size = 4, vjust = 0) +
   labs(x = "Polyp number", y = "Mean secondary septa width (µm)") +
   theme_minimal() +
   expand_limits(y = max(label_positions$y_pos) + 2) 
@@ -722,33 +722,37 @@ ggsave("Output/Tertiary_septa_tukey.png", plot = Tertiary_septa_tukey, width = 1
 
 ##CORALLITE 
 #ploting Corallite diameter with the data point and not the mean of it 
+#making the file to follow with the merges of the data and the letters created with the tukey test 
+Corallite_data_letters <- Corallite_Columella_point_select %>% 
+  dplyr::select(Polyp_number, Corallite_Diameter)
+
 # Merge both
-Corallite_Columella_point_plot <- merge(Corallite_Columella_point_select, letters_corallite, by = "Polyp_number", all.x = TRUE)
-print(Corallite_Columella_point_plot)
+Corallite_data_letters_merge <- merge(Corallite_data_letters, letters_corallite, by = "Polyp_number", all.x = TRUE)
+print(Corallite_data_letters_merge)
 
 # Ensure columns have the correct types
 # X-axis as factor
-Corallite_Columella_point_plot$Polyp_number <- factor(Corallite_Columella_point_plot$Polyp_number)          
+Corallite_data_letters_merge$Polyp_number <- factor(Corallite_data_letters_merge$Polyp_number)          
 # Y-axis numeric
-Corallite_Columella_point_plot$Corallite_Diameter <- as.numeric(Corallite_Columella_point_plot$Corallite_Diameter)  
+Corallite_data_letters_merge$Corallite_Diameter <- as.numeric(Corallite_data_letters_merge$Corallite_Diameter)  
 # Label as character
-Corallite_Columella_point_plot$Letters <- as.character(Corallite_Columella_point_plot$Letters)  
+Corallite_data_letters_merge$Letters <- as.character(Corallite_data_letters_merge$Letters)  
 
 # Compute max value per Polyp_Number to position letters above the boxes
-label_positions <- Corallite_Columella_point_plot %>%
+label_positions <- Corallite_data_letters_merge %>%
   group_by(Polyp_number) %>%
   summarise(y_pos = max(Corallite_Diameter, na.rm = TRUE))
 
-# Merge the letters (if not already)
-label_positions <- merge(label_positions, Corallite_Columella_point_plot[, c("Polyp_number", "Letters")], by = "Polyp_number", all.x = TRUE)
+# Merge the letters
+label_positions <- merge(label_positions, Corallite_data_letters_merge[, c("Polyp_number", "Letters")], by = "Polyp_number", all.x = TRUE)
 
 #corallite
-Corallite_plot <- ggplot(Corallite_Columella_point_select, aes(x = factor(Polyp_number), y = Corallite_Diameter))+
+Corallite_plot <- ggplot(Corallite_data_letters_merge, aes(x = factor(Polyp_number), y = Corallite_Diameter))+
   geom_boxplot(outlier.shape = NA, fill = "darkslategray3", width = 0.5, alpha = 0.5) +  
   geom_jitter(width = 0.5, color = "black", size = 1, alpha = 0.5) + 
   geom_text(data = label_positions,
             aes(x = Polyp_number, y = y_pos + 2, label = Letters), 
-            fontface = "plain", size = 4, vjust = 0) +
+            fontface = "plain", size = 3, vjust = 0) +
   labs(x = "Polyp number", y = "Corallite diameter (µm)") +
   theme_minimal()+
   expand_limits(y = max(label_positions$y_pos) + 2) 
@@ -757,27 +761,31 @@ ggsave("Output/Corallite_plot.png", plot = Corallite_plot, width = 10, height = 
 
 #columella
 #ploting Corallite diameter with the data point and not the mean of it 
+#making the file to follow with the merges of the data and the letters created with the tukey test 
+Columella_data_letters <- Corallite_Columella_point_select %>% 
+  dplyr::select(Polyp_number, Columella)
+
 # Merge both
-Corallite_Columella_point_plot <- merge(Corallite_Columella_point_select, letters_columella, by = "Polyp_number", all.x = TRUE)
-print(Corallite_Columella_point_plot)
+Columella_data_letters_merge <- merge(Columella_data_letters, letters_columella, by = "Polyp_number", all.x = TRUE)
+print(Columella_data_letters_merge)
 
 # Ensure columns have the correct types
 # X-axis as factor
-Corallite_Columella_point_plot$Polyp_number <- factor(Corallite_Columella_point_plot$Polyp_number)          
+Columella_data_letters_merge$Polyp_number <- factor(Columella_data_letters_merge$Polyp_number)          
 # Y-axis numeric
-Corallite_Columella_point_plot$Columella <- as.numeric(Corallite_Columella_point_plot$Columella)  
+Columella_data_letters_merge$Columella <- as.numeric(Columella_data_letters_merge$Columella)  
 # Label as character
-Corallite_Columella_point_plot$Letters <- as.character(Corallite_Columella_point_plot$Letters)  
+Columella_data_letters_merge$Letters <- as.character(Columella_data_letters_merge$Letters)  
 
 # Compute max value per Polyp_Number to position letters above the boxes
-label_positions <- Corallite_Columella_point_plot %>%
+label_positions <- Columella_data_letters_merge %>%
   group_by(Polyp_number) %>%
   summarise(y_pos = max(Columella, na.rm = TRUE))
 
 # Merge the letters (if not already)
-label_positions <- merge(label_positions, Corallite_Columella_point_plot[, c("Polyp_number", "Letters")], by = "Polyp_number", all.x = TRUE)
+label_positions <- merge(label_positions, Columella_data_letters_merge[, c("Polyp_number", "Letters")], by = "Polyp_number", all.x = TRUE)
 
-Columella_plot <- ggplot(Corallite_Columella_point_select, aes(x = factor(Polyp_number), y = Columella))+
+Columella_plot <- ggplot(Columella_data_letters_merge, aes(x = factor(Polyp_number), y = Columella))+
   geom_boxplot(outlier.shape = NA, fill = "darkslategray3", width = 0.5, alpha = 0.5) +  
   geom_jitter(width = 0.5, color = "black", size = 1, alpha = 0.5) + 
   labs(x = "Polyp number", y = "Columella diameter (µm)") +
